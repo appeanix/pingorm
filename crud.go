@@ -17,7 +17,7 @@ func (repo Repo) Create(_db interface{}, ptrToModel interface{}, option QueryOpt
 	return ptrToModel, err
 }
 
-func (repo Repo) UpdatePurchase(_db interface{}, ptrToModel interface{}, option QueryOption) (ptrToResult interface{}, err error) {
+func (repo Repo) Update(_db interface{}, ptrToModel interface{}, option QueryOption) (ptrToResult interface{}, err error) {
 	db := _db.(*gorm.DB)
 
 	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
