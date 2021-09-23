@@ -1,6 +1,7 @@
 package pingorm
 
 import (
+	"errors"
 	"reflect"
 
 	"gorm.io/gorm"
@@ -11,15 +12,24 @@ type Repo struct {
 	Model interface{}
 }
 
-func (repo Repo) Create(_db interface{}, ptrToModel interface{}, option QueryOption) (ptrToResult interface{}, err error) {
+func (repo Repo) Create(_db interface{}, model interface{}, option QueryOption) (ptrToModel interface{}, err error) {
+
+	if ptrToModel, err = parseModelToPtr(model); err != nil {
+		return nil, err
+	}
+
 	db := _db.(*gorm.DB)
 	err = db.Create(ptrToModel).Error
 	return ptrToModel, err
 }
 
-func (repo Repo) UpdatePurchase(_db interface{}, ptrToModel interface{}, option QueryOption) (ptrToResult interface{}, err error) {
-	db := _db.(*gorm.DB)
+func (repo Repo) Update(_db interface{}, model interface{}, option QueryOption) (ptrToModel interface{}, err error) {
 
+	if ptrToModel, err = parseModelToPtr(model); err != nil {
+		return nil, err
+	}
+
+	db := _db.(*gorm.DB)
 	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
 	err = db.Updates(ptrToModel).Error
 	return ptrToModel, err
@@ -50,4 +60,17 @@ func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QueryOpt
 	}
 
 	return db.Where("id IN ?", sliceOfIDs).Delete(repo.Model).Error
+}
+
+func parseModelToPtr(model interface{}) (interface{}, error) {
+	if modelType := reflect.TypeOf(model); modelType.Kind() == reflect.Struct {
+		ptrToModelVal := reflect.New(modelType)
+		ptrToModelVal.Elem().Set(reflect.ValueOf(model))
+		return ptrToModelVal.Interface(), nil
+
+	} else if modelType.Kind() == reflect.Ptr && modelType.Elem().Kind() == reflect.Struct {
+		return model, nil
+
+	}
+	return nil, errors.New("model must be a kind of struct or pointer to struct type")
 }
