@@ -8,7 +8,7 @@ type (
 		ID    uint32 `gorm:"primaryKey"`
 		Name  string
 		Sex   string
-		Dob   string
+		Dob   *time.Time
 		Books []Book
 	}
 )
@@ -18,7 +18,7 @@ type (
 		ID    uint32 `gorm:"primaryKey"`
 		Name  string
 		Sex   string
-		Dob   string
+		Dob   *time.Time
 		Books []Book
 	}
 )
@@ -27,7 +27,7 @@ type (
 	Book struct {
 		ID          uint32 `gorm:"primaryKey"`
 		Title       string
-		PublishDate time.Time
+		PublishDate *time.Time
 		AuthorID    uint32
 		EditorID    uint32
 		Author      Author `gorm:"foreignKey:AuthorID;"`
