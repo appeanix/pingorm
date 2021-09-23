@@ -8,6 +8,7 @@ type (
 		ID         uint32 `gorm:"primaryKey"`
 		AuthorName string `json:"authorName"`
 		Age        uint32 `json:"age"`
+		Books      []Book `json:"books"`
 	}
 )
 
@@ -16,6 +17,7 @@ type (
 		ID         uint32 `gorm:"primaryKey"`
 		EditorName string `json:"editorName"`
 		Age        uint32 `json:"age"`
+		Books      []Book `json:"books"`
 	}
 )
 
