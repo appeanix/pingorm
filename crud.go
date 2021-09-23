@@ -12,7 +12,7 @@ type Repo struct {
 	Model interface{}
 }
 
-func (repo Repo) Create(_db interface{}, model interface{}, option QueryOption) (ptrToModel interface{}, err error) {
+func (repo Repo) Create(_db interface{}, model interface{}, option QuerySelector) (ptrToModel interface{}, err error) {
 
 	if ptrToModel, err = parseModelToPtr(model); err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func (repo Repo) Create(_db interface{}, model interface{}, option QueryOption) 
 	return ptrToModel, err
 }
 
-func (repo Repo) Update(_db interface{}, model interface{}, option QueryOption) (ptrToModel interface{}, err error) {
+func (repo Repo) Update(_db interface{}, model interface{}, option QuerySelector) (ptrToModel interface{}, err error) {
 
 	if ptrToModel, err = parseModelToPtr(model); err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func (repo Repo) Update(_db interface{}, model interface{}, option QueryOption) 
 	return ptrToModel, err
 }
 
-func (repo Repo) Upsert(_db interface{}, slice interface{}, options QueryOption) (sliceOfResult interface{}, err error) {
+func (repo Repo) Upsert(_db interface{}, slice interface{}, options QuerySelector) (sliceOfResult interface{}, err error) {
 	db := _db.(*gorm.DB)
 	err = db.Clauses(clause.OnConflict{
 		DoUpdates: clause.AssignmentColumns(options.GetSelectedFields()),
@@ -44,7 +44,7 @@ func (repo Repo) Upsert(_db interface{}, slice interface{}, options QueryOption)
 	return slice, err
 }
 
-func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QueryOption) error {
+func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QuerySelector) error {
 
 	if reflect.TypeOf(sliceOfIDs).Kind() == reflect.Slice {
 		if reflect.ValueOf(sliceOfIDs).Len() == 0 {
@@ -55,7 +55,7 @@ func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QueryOpt
 	}
 
 	db := _db.(*gorm.DB)
-	if option.HardDelete() {
+	if option.IsHardDelete() {
 		db = db.Unscoped()
 	}
 

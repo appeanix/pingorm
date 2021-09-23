@@ -14,20 +14,20 @@ func TestParseModelToPtr(t *testing.T) {
 		expErr error
 	}{
 		{
-			model: TestTable{
-				Field2: "FieldValue",
+			model: Author{
+				Name: "Vichheka",
 			},
-			expGot: &TestTable{
-				Field2: "FieldValue",
+			expGot: &Author{
+				Name: "Vichheka",
 			},
 			expErr: nil,
 		},
 		{
-			model: &TestTable{
-				Field2: "FieldValue",
+			model: &Author{
+				Name: "Vichheka",
 			},
-			expGot: &TestTable{
-				Field2: "FieldValue",
+			expGot: &Author{
+				Name: "Vichheka",
 			},
 			expErr: nil,
 		},

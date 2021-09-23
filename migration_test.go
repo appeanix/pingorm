@@ -13,6 +13,7 @@ func TestMigrate(t *testing.T) {
 	req.Nil(err)
 
 	// Migrate models here
-	db.AutoMigrate(&TestTable{})
-
+	db.AutoMigrate(&Author{})
+	db.AutoMigrate(&Editor{})
+	db.AutoMigrate(&Book{})
 }

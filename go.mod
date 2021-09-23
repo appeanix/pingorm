@@ -1,4 +1,4 @@
-module appeanix/pingorm
+module pingorm
 
 go 1.16
 
