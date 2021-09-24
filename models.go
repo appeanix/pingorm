@@ -5,11 +5,12 @@ import "time"
 // Model sample entities here
 type (
 	Author struct {
-		ID    uint32 `gorm:"primaryKey"`
-		Name  string
-		Sex   string
-		Dob   *time.Time
-		Books []Book
+		ID            uint32 `gorm:"primaryKey"`
+		ContactNumber string
+		Name          string
+		Sex           string
+		Dob           *time.Time
+		Books         []Book
 	}
 )
 
