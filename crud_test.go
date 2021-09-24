@@ -320,6 +320,7 @@ func TestCreate(t *testing.T) {
 			seeds: []interface{}{
 				&Author{
 					ID:   1,
+					ContactNumber: "12345678",
 					Name: "Henglong",
 					Sex:  "Male",
 				},
@@ -338,6 +339,7 @@ func TestCreate(t *testing.T) {
 			input: Author{
 				Name: "Vicheka",
 				Sex: "Male",
+				ContactNumber: "12345678",
 				Books: []Book{
 					{
 						Title: "New-Book",
@@ -350,6 +352,7 @@ func TestCreate(t *testing.T) {
 				ID: 2,
 				Name: "Vicheka",
 				Sex: "Male",
+				ContactNumber: "12345678",
 				Books: []Book{
 					{
 						Title: "New-Book",
@@ -363,11 +366,13 @@ func TestCreate(t *testing.T) {
 					ID:   1,
 					Name: "Henglong",
 					Sex:  "Male",
+					ContactNumber: "12345678",
 				},
 				{
 					ID:   2,
 					Name: "Vicheka",
 					Sex:  "Male",
+					ContactNumber: "12345678",
 				},
 			},
 			expDbBook: []Book{
@@ -385,7 +390,7 @@ func TestCreate(t *testing.T) {
 					Sex: "Male",
 				},
 			},
-			queryParams: QueryOption{SelectedFields: []string{"ID","Name","Sex"}},
+			queryParams: QueryOption{SelectedFields: []string{"ID","Name","Sex","ContactNumber"}},
 			expErr: nil,
 		},
 
@@ -516,7 +521,7 @@ func TestCreate(t *testing.T) {
 			req.Equal(tc.expErr, err)
 
 			var dbAuthors []Author
-			db.Model(&Author{}).Select("id", "name", "sex").Find(&dbAuthors)
+			db.Model(&Author{}).Select("id", "name", "sex","contact_number").Find(&dbAuthors)
 			req.Equal(tc.expDbAuthor, dbAuthors)
 
 			var dbBooks []Book
