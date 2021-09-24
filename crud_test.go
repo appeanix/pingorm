@@ -157,11 +157,10 @@ func TestCreate(t *testing.T) {
 			},
 			expDbBook: []Book{},
 			expDbEditor: []Editor{},
-			queryParams: QueryOption{},
 			expErr: nil,
 		},
 
-		//create one more associated objects
+		// Create Author along with a new associated Book
 		{
 			seeds: []interface{}{
 				&Author{
@@ -181,21 +180,39 @@ func TestCreate(t *testing.T) {
 					Title: "Hello-World",
 				},
 			},
-			input: Book{
-				Title: "New-Book",
-				AuthorID: 1,
-				EditorID: 1,
+			input: Author {
+				Name: "Vicheka",
+				Sex:  "Male",
+				Books: []Book{
+					{
+						Title: "New-Book",
+						EditorID: 1,
+						AuthorID: 1,
+					},
+				},
 			},
-			expGot: &Book{
-				ID:   2,
-				Title: "New-Book",
-				AuthorID: 1,
-				EditorID: 1,
+			expGot: &Author{
+				ID: 2,
+				Name: "Vicheka",
+				Sex:  "Male",
+				Books: []Book{
+					{
+						ID: 2,
+						Title: "New-Book",
+						EditorID: 1,
+						AuthorID: 2,
+					},
+				},
 			},
 			expDbAuthor: []Author{
 				{
 					ID:   1,
 					Name: "Henglong",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
 					Sex:  "Male",
 				},
 			},
@@ -207,8 +224,8 @@ func TestCreate(t *testing.T) {
 					Title:    "Hello-World",
 				},
 				{
-					ID:       2,
-					AuthorID: 1,
+					ID: 2,
+					AuthorID: 2,
 					EditorID: 1,
 					Title:    "New-Book",
 				},
@@ -220,11 +237,10 @@ func TestCreate(t *testing.T) {
 					Sex: "Male",
 				},
 			},
-			queryParams: QueryOption{SelectedFields: []string{}},
 			expErr: nil,
 		},
 
-		//Gorm ignore updating the existing associated objects
+		// It should create Author and ignore updating existing Book
 		{
 			seeds: []interface{}{
 				&Author{
@@ -250,7 +266,7 @@ func TestCreate(t *testing.T) {
 				Books: []Book{
 					{
 						ID: 1,
-						Title: "New-Book",
+						Title: "Hello-World-Updated",
 						AuthorID: 1,
 						EditorID: 1,
 					},
@@ -263,7 +279,7 @@ func TestCreate(t *testing.T) {
 				Books: []Book{
 					{
 						ID: 1,
-						Title: "New-Book",
+						Title: "Hello-World-Updated",
 						AuthorID: 2,
 						EditorID: 1,
 					},
@@ -296,11 +312,10 @@ func TestCreate(t *testing.T) {
 					Sex: "Male",
 				},
 			},
-			queryParams: QueryOption{SelectedFields: []string{}},
 			expErr: nil,
 		},
 
-		//skip creating all associations
+		//Create Author and ignore creating and updating associations using Select
 		{
 			seeds: []interface{}{
 				&Author{
@@ -370,11 +385,85 @@ func TestCreate(t *testing.T) {
 					Sex: "Male",
 				},
 			},
-			queryParams: QueryOption{SelectedFields: []string{"id","name","sex"}},
+			queryParams: QueryOption{SelectedFields: []string{"ID","Name","Sex"}},
 			expErr: nil,
 		},
 
-		// returns error when MySql inserts duplicate target record.
+		//Create Author and ignore creating and updating associations using Omit
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Book{
+					ID: 1,
+					AuthorID: 1,
+					EditorID: 1,
+					Title: "Hello-World",
+				},
+			},
+			input: Author{
+				Name: "Vicheka",
+				Sex: "Male",
+				Books: []Book{
+					{
+						Title: "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expGot: &Author{
+				ID: 2,
+				Name: "Vicheka",
+				Sex: "Male",
+				Books: []Book{
+					{
+						Title: "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID:       1,
+					AuthorID: 1,
+					EditorID: 1,
+					Title:    "Hello-World",
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+				},
+			},
+			queryParams: QueryOption{OmittedFields: []string{"Books"}},
+			expErr: nil,
+		},
+
+		// Create duplicate Author should return error
 		{
 			seeds: []interface{}{
 				&Author{
