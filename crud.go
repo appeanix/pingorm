@@ -19,6 +19,7 @@ func (repo Repo) Create(_db interface{}, model interface{}, option QuerySelector
 	}
 
 	db := _db.(*gorm.DB)
+	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
 	err = db.Create(ptrToModel).Error
 	return ptrToModel, err
 }
