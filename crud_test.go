@@ -111,3 +111,71 @@ func cleanTables() {
 	cleaner.Clean(modelsToTableNames()...)
 	cleaner.Close()
 }
+
+func TestCreate(t *testing.T) {
+
+	tests := []struct {
+		seeds       []interface{}
+		input       interface{}
+		expGot      interface{}
+		expDbAuthor []Author
+	}{
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+			},
+			input: Author{
+				Name: "Vicheka",
+				Sex: "Male",
+			},
+			expGot: &Author{
+				ID: 2,
+				Name: "Vicheka",
+				Sex: "Male",
+
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+
+			cleanTables()
+
+			db, err := openDb()
+			req.Nil(err)
+
+			for _, seed := range tc.seeds {
+				err = db.Create(seed).Error
+				req.Nil(err)
+			}
+
+			got, err := Repo{}.Create(db, tc.input, QueryOption{})
+			req.Nil(err)
+
+			req.Equal(tc.expGot, got)
+
+			var dbAuthors []Author
+			db.Model(&Author{}).Select("id", "name", "sex").Find(&dbAuthors)
+			req.Equal(tc.expDbAuthor, dbAuthors)
+
+		}()
+	}
+}
