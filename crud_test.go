@@ -547,7 +547,7 @@ func TestUpdate(t *testing.T) {
 		expDbEditor []Editor
 		queryParams QueryOption
 	}{
-		//Update only the field that given in the selectedF
+		// It should update fields of Author specified in the SelectedF. New Book is not created.
 		{
 			seeds: []interface{}{
 				&Author{
@@ -616,7 +616,7 @@ func TestUpdate(t *testing.T) {
 			queryParams: QueryOption{SelectedFields: []string{"ID","Name","Sex"}},
 		},
 	
-		//Update Author and Create the association but omit some field
+		// It should update all fields of Author except an omitted field and create its new associated Book when OmittedF is specified
 		{
 			seeds: []interface{}{
 				&Author{
@@ -696,7 +696,7 @@ func TestUpdate(t *testing.T) {
 			queryParams: QueryOption{OmittedFields: []string{"ContactNumber"}},
 		},
 	
-		//Save all the association
+		// It should update fields of Author and only create its new associated Book when SelectedF and OmittedF are not specified
 		{
 			seeds: []interface{}{
 				&Author{
