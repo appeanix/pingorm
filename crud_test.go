@@ -136,12 +136,12 @@ func TestCreate(t *testing.T) {
 			},
 			input: Author{
 				Name: "Vicheka",
-				Sex: "Male",
+				Sex:  "Male",
 			},
 			expGot: &Author{
-				ID: 2,
+				ID:   2,
 				Name: "Vicheka",
-				Sex: "Male",
+				Sex:  "Male",
 			},
 			expDbAuthor: []Author{
 				{
@@ -155,9 +155,9 @@ func TestCreate(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			expDbBook: []Book{},
+			expDbBook:   []Book{},
 			expDbEditor: []Editor{},
-			expErr: nil,
+			expErr:      nil,
 		},
 
 		// Create Author along with a new associated Book
@@ -174,31 +174,31 @@ func TestCreate(t *testing.T) {
 					Sex:  "Male",
 				},
 				&Book{
-					ID: 1,
+					ID:       1,
 					AuthorID: 1,
 					EditorID: 1,
-					Title: "Hello-World",
+					Title:    "Hello-World",
 				},
 			},
-			input: Author {
+			input: Author{
 				Name: "Vicheka",
 				Sex:  "Male",
 				Books: []Book{
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						EditorID: 1,
 						AuthorID: 1,
 					},
 				},
 			},
 			expGot: &Author{
-				ID: 2,
+				ID:   2,
 				Name: "Vicheka",
 				Sex:  "Male",
 				Books: []Book{
 					{
-						ID: 2,
-						Title: "New-Book",
+						ID:       2,
+						Title:    "New-Book",
 						EditorID: 1,
 						AuthorID: 2,
 					},
@@ -224,7 +224,7 @@ func TestCreate(t *testing.T) {
 					Title:    "Hello-World",
 				},
 				{
-					ID: 2,
+					ID:       2,
 					AuthorID: 2,
 					EditorID: 1,
 					Title:    "New-Book",
@@ -232,9 +232,9 @@ func TestCreate(t *testing.T) {
 			},
 			expDbEditor: []Editor{
 				{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 			},
 			expErr: nil,
@@ -254,32 +254,32 @@ func TestCreate(t *testing.T) {
 					Sex:  "Male",
 				},
 				&Book{
-					ID: 1,
+					ID:       1,
 					AuthorID: 1,
 					EditorID: 1,
-					Title: "Hello-World",
+					Title:    "Hello-World",
 				},
 			},
 			input: Author{
 				Name: "Vicheka",
-				Sex: "Male",
+				Sex:  "Male",
 				Books: []Book{
 					{
-						ID: 1,
-						Title: "Hello-World-Updated",
+						ID:       1,
+						Title:    "Hello-World-Updated",
 						AuthorID: 1,
 						EditorID: 1,
 					},
 				},
 			},
 			expGot: &Author{
-				ID: 2,
+				ID:   2,
 				Name: "Vicheka",
-				Sex: "Male",
+				Sex:  "Male",
 				Books: []Book{
 					{
-						ID: 1,
-						Title: "Hello-World-Updated",
+						ID:       1,
+						Title:    "Hello-World-Updated",
 						AuthorID: 2,
 						EditorID: 1,
 					},
@@ -307,9 +307,9 @@ func TestCreate(t *testing.T) {
 			},
 			expDbEditor: []Editor{
 				{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 			},
 			expErr: nil,
@@ -319,10 +319,10 @@ func TestCreate(t *testing.T) {
 		{
 			seeds: []interface{}{
 				&Author{
-					ID:   1,
+					ID:            1,
 					ContactNumber: "12345678",
-					Name: "Henglong",
-					Sex:  "Male",
+					Name:          "Henglong",
+					Sex:           "Male",
 				},
 				&Editor{
 					ID:   1,
@@ -330,32 +330,32 @@ func TestCreate(t *testing.T) {
 					Sex:  "Male",
 				},
 				&Book{
-					ID: 1,
+					ID:       1,
 					AuthorID: 1,
 					EditorID: 1,
-					Title: "Hello-World",
+					Title:    "Hello-World",
 				},
 			},
 			input: Author{
-				Name: "Vicheka",
-				Sex: "Male",
+				Name:          "Vicheka",
+				Sex:           "Male",
 				ContactNumber: "12345678",
 				Books: []Book{
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
 				},
 			},
 			expGot: &Author{
-				ID: 2,
-				Name: "Vicheka",
-				Sex: "Male",
+				ID:            2,
+				Name:          "Vicheka",
+				Sex:           "Male",
 				ContactNumber: "12345678",
 				Books: []Book{
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
@@ -363,15 +363,15 @@ func TestCreate(t *testing.T) {
 			},
 			expDbAuthor: []Author{
 				{
-					ID:   1,
-					Name: "Henglong",
-					Sex:  "Male",
+					ID:            1,
+					Name:          "Henglong",
+					Sex:           "Male",
 					ContactNumber: "12345678",
 				},
 				{
-					ID:   2,
-					Name: "Vicheka",
-					Sex:  "Male",
+					ID:            2,
+					Name:          "Vicheka",
+					Sex:           "Male",
 					ContactNumber: "12345678",
 				},
 			},
@@ -385,13 +385,13 @@ func TestCreate(t *testing.T) {
 			},
 			expDbEditor: []Editor{
 				{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 			},
-			queryParams: QueryOption{SelectedFields: []string{"ID","Name","Sex","ContactNumber"}},
-			expErr: nil,
+			queryParams: QueryOption{SelectedFields: []string{"ID", "Name", "Sex", "ContactNumber"}},
+			expErr:      nil,
 		},
 
 		//Create Author and ignore creating and updating associations using Omit
@@ -408,30 +408,30 @@ func TestCreate(t *testing.T) {
 					Sex:  "Male",
 				},
 				&Book{
-					ID: 1,
+					ID:       1,
 					AuthorID: 1,
 					EditorID: 1,
-					Title: "Hello-World",
+					Title:    "Hello-World",
 				},
 			},
 			input: Author{
 				Name: "Vicheka",
-				Sex: "Male",
+				Sex:  "Male",
 				Books: []Book{
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
 				},
 			},
 			expGot: &Author{
-				ID: 2,
+				ID:   2,
 				Name: "Vicheka",
-				Sex: "Male",
+				Sex:  "Male",
 				Books: []Book{
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
@@ -459,13 +459,13 @@ func TestCreate(t *testing.T) {
 			},
 			expDbEditor: []Editor{
 				{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 			},
 			queryParams: QueryOption{OmittedFields: []string{"Books"}},
-			expErr: nil,
+			expErr:      nil,
 		},
 
 		// Create duplicate Author should return error
@@ -479,8 +479,8 @@ func TestCreate(t *testing.T) {
 			},
 			input: Author{
 				ID:   1,
-					Name: "Henglong",
-					Sex:  "Male",
+				Name: "Henglong",
+				Sex:  "Male",
 			},
 			expGot: &Author{
 				ID:   1,
@@ -494,9 +494,9 @@ func TestCreate(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			expDbBook: []Book{},
+			expDbBook:   []Book{},
 			expDbEditor: []Editor{},
-			expErr: &mysql.MySQLError{Number: 0x0426 ,Message: "Duplicate entry '1' for key 'author.PRIMARY'"},
+			expErr:      &mysql.MySQLError{Number: 0x0426, Message: "Duplicate entry '1' for key 'author.PRIMARY'"},
 		},
 	}
 
@@ -519,6 +519,295 @@ func TestCreate(t *testing.T) {
 
 			req.Equal(tc.expGot, got)
 			req.Equal(tc.expErr, err)
+
+			var dbAuthors []Author
+			db.Model(&Author{}).Select("id", "name", "sex", "contact_number").Find(&dbAuthors)
+			req.Equal(tc.expDbAuthor, dbAuthors)
+
+			var dbBooks []Book
+			db.Model(&Book{}).Select("id", "title", "author_id", "editor_id").Find(&dbBooks)
+			req.Equal(tc.expDbBook, dbBooks)
+
+			var dbEditors []Editor
+			db.Model(&Editor{}).Select("id", "name", "sex").Find(&dbEditors)
+			req.Equal(tc.expDbEditor, dbEditors)
+
+		}()
+	}
+}
+
+func TestUpdate(t *testing.T) {
+
+	tests := []struct {
+		seeds       []interface{}
+		input       interface{}
+		expGot      interface{}
+		expDbAuthor []Author
+		expDbBook   []Book
+		expDbEditor []Editor
+		queryParams QueryOption
+	}{
+		//Update only the field that given in the selectedF
+		{
+			seeds: []interface{}{
+				&Author{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+				},
+				&Editor{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+				},
+				&Book{
+					ID: 1,
+					AuthorID: 1,
+					EditorID: 1,
+					Title: "Hello-World",
+				},	
+			},
+			input: Author{
+				ID: 1,
+				Name: "Henglong-Updated",
+				Sex: "Male-Updated",
+				Books: []Book{
+					{
+						Title: "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expGot: &Author{
+				ID: 1,
+				Name: "Henglong-Updated",
+				Sex: "Male-Updated",
+				Books: []Book{
+					{
+						Title: "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID: 1,
+					Name: "Henglong-Updated",
+					Sex: "Male-Updated",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID: 1,
+					Title: "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+				},
+			},
+			queryParams: QueryOption{SelectedFields: []string{"ID","Name","Sex"}},
+		},
+	
+		//Update Author and Create the association but omit some field
+		{
+			seeds: []interface{}{
+				&Author{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+					ContactNumber: "1234567890",
+				},
+				&Editor{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+				},
+				&Book{
+					ID: 1,
+					Title: "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			input: Author{
+				ID: 1,
+				Name: "Henglong-Updated",
+				Sex: "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						Title: "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expGot: &Author{
+				ID: 1,
+				Name: "Henglong-Updated",
+				Sex: "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID: 2,
+						Title: "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID: 1,
+					Name: "Henglong-Updated",
+					Sex: "Male-Updated",
+					ContactNumber: "1234567890",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID: 1,
+					Title: "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+				{
+					ID: 2,
+					Title: "New-Book",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+				},
+			},
+			queryParams: QueryOption{OmittedFields: []string{"ContactNumber"}},
+		},
+	
+		//Save all the association
+		{
+			seeds: []interface{}{
+				&Author{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+					ContactNumber: "1234567890",
+				},
+				&Editor{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+				},
+				&Book{
+					ID: 1,
+					Title: "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			input: Author{
+				ID: 1,
+				Name: "Henglong-Updated",
+				Sex: "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID: 1,
+						Title: "Hello-World-Updated",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+					{
+						Title: "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expGot: &Author{
+				ID: 1,
+				Name: "Henglong-Updated",
+				Sex: "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID: 1,
+						Title: "Hello-World-Updated",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+					{
+						ID: 2,
+						Title: "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID: 1,
+					Name: "Henglong-Updated",
+					Sex: "Male-Updated",
+					ContactNumber: "1234567890-Updated",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID: 1,
+					Title: "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+				{
+					ID: 2,
+					Title: "New-Book",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID: 1,
+					Name: "Henglong",
+					Sex: "Male",
+				},
+			},
+			queryParams: QueryOption{},
+		},
+	}
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+
+			cleanTables()
+
+			db, err := openDb()
+			req.Nil(err)
+			db = db.Debug()
+
+			for _, seed := range tc.seeds {
+				err = db.Create(seed).Error
+				req.Nil(err)
+			}
+
+			got, err := Repo{}.Update(db, tc.input, tc.queryParams)
+
+			req.Nil(err)
+
+			req.Equal(tc.expGot, got)
 
 			var dbAuthors []Author
 			db.Model(&Author{}).Select("id", "name", "sex","contact_number").Find(&dbAuthors)
