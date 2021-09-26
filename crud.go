@@ -63,6 +63,22 @@ func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QuerySel
 	return db.Where("id IN ?", sliceOfIDs).Delete(repo.Model).Error
 }
 
+func (repo Repo) Updates(_db interface{}, sliceOfIDs interface{}, values interface{}, option QuerySelector) error {
+
+	if reflect.TypeOf(sliceOfIDs).Kind() == reflect.Slice {
+		if reflect.ValueOf(sliceOfIDs).Len() == 0 {
+			return nil
+		}
+	} else {
+		panic("slice required")
+	}
+
+	db := _db.(*gorm.DB)
+	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
+	
+	return db.Where("id IN ?", sliceOfIDs).Updates(values).Error
+}
+
 func parseModelToPtr(model interface{}) (interface{}, error) {
 	if modelType := reflect.TypeOf(model); modelType.Kind() == reflect.Struct {
 		ptrToModelVal := reflect.New(modelType)
