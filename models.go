@@ -1,6 +1,10 @@
 package pingorm
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // Model sample entities here
 type (
@@ -10,17 +14,19 @@ type (
 		Name          string
 		Sex           string
 		Dob           *time.Time
+		Deleted       gorm.DeletedAt
 		Books         []Book
 	}
 )
 
 type (
 	Editor struct {
-		ID    uint32 `gorm:"primaryKey"`
-		Name  string
-		Sex   string
-		Dob   *time.Time
-		Books []Book
+		ID      uint32 `gorm:"primaryKey"`
+		Name    string
+		Sex     string
+		Dob     *time.Time
+		Deleted gorm.DeletedAt
+		Books   []Book
 	}
 )
 
@@ -33,6 +39,7 @@ type (
 		EditorID    uint32
 		Author      Author `gorm:"foreignKey:AuthorID;"`
 		Editor      Editor `gorm:"foreignKey:EditorID;"`
+		Deleted     gorm.DeletedAt
 	}
 )
 

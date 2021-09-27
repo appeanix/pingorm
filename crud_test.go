@@ -3,11 +3,13 @@ package pingorm
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/khaiql/dbcleaner"
 	"github.com/khaiql/dbcleaner/engine"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -820,6 +822,181 @@ func TestUpdate(t *testing.T) {
 			var dbEditors []Editor
 			db.Model(&Editor{}).Select("id", "name", "sex").Find(&dbEditors)
 			req.Equal(tc.expDbEditor, dbEditors)
+
+		}()
+	}
+}
+
+func TestDelete(t *testing.T) {
+	mockTime := time.Now()
+
+	tests := []struct {
+		seeds        []interface{}
+		input        interface{}
+		deletedModel interface{}
+		expGot       interface{}
+		expDbAuthor  []Author
+		queryParams  QueryOption
+		expErr error
+	}{
+		//soft delete
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: []uint32{
+				1,
+				2,
+			},
+			expGot: []uint32{
+				1,
+				2,
+			},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+				
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond),Valid: true},
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond),Valid: true},
+				},
+				{
+					ID: 3,
+					Name: "NaNa",
+					Sex: "Female",
+				},
+			},
+		},
+
+		//hard delete
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: []uint32{
+				1,
+				2,
+			},
+			expGot: []uint32{
+				1,
+				2,
+			},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			queryParams: QueryOption{HardDelete: true},
+		},
+
+		// Test the input is empty
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: []uint32{},
+			expGot: []uint32{},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				{
+					ID: 3,
+					Name: "NaNa",
+					Sex: "Female",
+				},
+			},
+			expErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+
+			cleanTables()
+
+			db, err := openDb()
+			req.Nil(err)
+			db = db.Debug()
+
+			db.Config.NowFunc = func() time.Time {
+				return mockTime
+			}
+
+			for _, seed := range tc.seeds {
+				err = db.Create(seed).Error
+				req.Nil(err)
+			}
+
+			errDelete := Repo{Model: tc.deletedModel}.Delete(db, tc.input, tc.queryParams)
+
+			req.Nil(errDelete)
+			req.Equal(tc.expErr, errDelete)
+
+			var dbAuthors []Author
+			db.Model(&Author{}).Unscoped().Select("Deleted","ID", "Name", "Sex").Find(&dbAuthors)
+			req.Equal(tc.expDbAuthor, dbAuthors)
 
 		}()
 	}
