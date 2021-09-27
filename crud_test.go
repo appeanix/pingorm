@@ -3,11 +3,13 @@ package pingorm
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/khaiql/dbcleaner"
 	"github.com/khaiql/dbcleaner/engine"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -551,41 +553,41 @@ func TestUpdate(t *testing.T) {
 		{
 			seeds: []interface{}{
 				&Author{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 				&Editor{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 				&Book{
-					ID: 1,
+					ID:       1,
 					AuthorID: 1,
 					EditorID: 1,
-					Title: "Hello-World",
-				},	
+					Title:    "Hello-World",
+				},
 			},
 			input: Author{
-				ID: 1,
+				ID:   1,
 				Name: "Henglong-Updated",
-				Sex: "Male-Updated",
+				Sex:  "Male-Updated",
 				Books: []Book{
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
 				},
 			},
 			expGot: &Author{
-				ID: 1,
+				ID:   1,
 				Name: "Henglong-Updated",
-				Sex: "Male-Updated",
+				Sex:  "Male-Updated",
 				Books: []Book{
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
@@ -593,72 +595,72 @@ func TestUpdate(t *testing.T) {
 			},
 			expDbAuthor: []Author{
 				{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong-Updated",
-					Sex: "Male-Updated",
+					Sex:  "Male-Updated",
 				},
 			},
 			expDbBook: []Book{
 				{
-					ID: 1,
-					Title: "Hello-World",
+					ID:       1,
+					Title:    "Hello-World",
 					AuthorID: 1,
 					EditorID: 1,
 				},
 			},
 			expDbEditor: []Editor{
 				{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 			},
-			queryParams: QueryOption{SelectedFields: []string{"ID","Name","Sex"}},
+			queryParams: QueryOption{SelectedFields: []string{"ID", "Name", "Sex"}},
 		},
-	
+
 		// It should update all fields of Author except an omitted field and create its new associated Book when OmittedF is specified
 		{
 			seeds: []interface{}{
 				&Author{
-					ID: 1,
-					Name: "Henglong",
-					Sex: "Male",
+					ID:            1,
+					Name:          "Henglong",
+					Sex:           "Male",
 					ContactNumber: "1234567890",
 				},
 				&Editor{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 				&Book{
-					ID: 1,
-					Title: "Hello-World",
+					ID:       1,
+					Title:    "Hello-World",
 					AuthorID: 1,
 					EditorID: 1,
 				},
 			},
 			input: Author{
-				ID: 1,
-				Name: "Henglong-Updated",
-				Sex: "Male-Updated",
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
 				ContactNumber: "1234567890-Updated",
 				Books: []Book{
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
 				},
 			},
 			expGot: &Author{
-				ID: 1,
-				Name: "Henglong-Updated",
-				Sex: "Male-Updated",
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
 				ContactNumber: "1234567890-Updated",
 				Books: []Book{
 					{
-						ID: 2,
-						Title: "New-Book",
+						ID:       2,
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
@@ -666,91 +668,91 @@ func TestUpdate(t *testing.T) {
 			},
 			expDbAuthor: []Author{
 				{
-					ID: 1,
-					Name: "Henglong-Updated",
-					Sex: "Male-Updated",
+					ID:            1,
+					Name:          "Henglong-Updated",
+					Sex:           "Male-Updated",
 					ContactNumber: "1234567890",
 				},
 			},
 			expDbBook: []Book{
 				{
-					ID: 1,
-					Title: "Hello-World",
+					ID:       1,
+					Title:    "Hello-World",
 					AuthorID: 1,
 					EditorID: 1,
 				},
 				{
-					ID: 2,
-					Title: "New-Book",
+					ID:       2,
+					Title:    "New-Book",
 					AuthorID: 1,
 					EditorID: 1,
 				},
 			},
 			expDbEditor: []Editor{
 				{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 			},
 			queryParams: QueryOption{OmittedFields: []string{"ContactNumber"}},
 		},
-	
+
 		// It should update fields of Author and only create its new associated Book when SelectedF and OmittedF are not specified
 		{
 			seeds: []interface{}{
 				&Author{
-					ID: 1,
-					Name: "Henglong",
-					Sex: "Male",
+					ID:            1,
+					Name:          "Henglong",
+					Sex:           "Male",
 					ContactNumber: "1234567890",
 				},
 				&Editor{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 				&Book{
-					ID: 1,
-					Title: "Hello-World",
+					ID:       1,
+					Title:    "Hello-World",
 					AuthorID: 1,
 					EditorID: 1,
 				},
 			},
 			input: Author{
-				ID: 1,
-				Name: "Henglong-Updated",
-				Sex: "Male-Updated",
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
 				ContactNumber: "1234567890-Updated",
 				Books: []Book{
 					{
-						ID: 1,
-						Title: "Hello-World-Updated",
+						ID:       1,
+						Title:    "Hello-World-Updated",
 						AuthorID: 1,
 						EditorID: 1,
 					},
 					{
-						Title: "New-Book",
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
 				},
 			},
 			expGot: &Author{
-				ID: 1,
-				Name: "Henglong-Updated",
-				Sex: "Male-Updated",
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
 				ContactNumber: "1234567890-Updated",
 				Books: []Book{
 					{
-						ID: 1,
-						Title: "Hello-World-Updated",
+						ID:       1,
+						Title:    "Hello-World-Updated",
 						AuthorID: 1,
 						EditorID: 1,
 					},
 					{
-						ID: 2,
-						Title: "New-Book",
+						ID:       2,
+						Title:    "New-Book",
 						AuthorID: 1,
 						EditorID: 1,
 					},
@@ -758,31 +760,31 @@ func TestUpdate(t *testing.T) {
 			},
 			expDbAuthor: []Author{
 				{
-					ID: 1,
-					Name: "Henglong-Updated",
-					Sex: "Male-Updated",
+					ID:            1,
+					Name:          "Henglong-Updated",
+					Sex:           "Male-Updated",
 					ContactNumber: "1234567890-Updated",
 				},
 			},
 			expDbBook: []Book{
 				{
-					ID: 1,
-					Title: "Hello-World",
+					ID:       1,
+					Title:    "Hello-World",
 					AuthorID: 1,
 					EditorID: 1,
 				},
 				{
-					ID: 2,
-					Title: "New-Book",
+					ID:       2,
+					Title:    "New-Book",
 					AuthorID: 1,
 					EditorID: 1,
 				},
 			},
 			expDbEditor: []Editor{
 				{
-					ID: 1,
+					ID:   1,
 					Name: "Henglong",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 			},
 			queryParams: QueryOption{},
@@ -810,7 +812,7 @@ func TestUpdate(t *testing.T) {
 			req.Equal(tc.expGot, got)
 
 			var dbAuthors []Author
-			db.Model(&Author{}).Select("id", "name", "sex","contact_number").Find(&dbAuthors)
+			db.Model(&Author{}).Select("id", "name", "sex", "contact_number").Find(&dbAuthors)
 			req.Equal(tc.expDbAuthor, dbAuthors)
 
 			var dbBooks []Book
@@ -820,6 +822,181 @@ func TestUpdate(t *testing.T) {
 			var dbEditors []Editor
 			db.Model(&Editor{}).Select("id", "name", "sex").Find(&dbEditors)
 			req.Equal(tc.expDbEditor, dbEditors)
+
+		}()
+	}
+}
+
+func TestDelete(t *testing.T) {
+	mockTime := time.Now()
+
+	tests := []struct {
+		seeds        []interface{}
+		input        interface{}
+		deletedModel interface{}
+		expGot       interface{}
+		expDbAuthor  []Author
+		queryParams  QueryOption
+		expErr error
+	}{
+		//soft delete
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: []uint32{
+				1,
+				2,
+			},
+			expGot: []uint32{
+				1,
+				2,
+			},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+				
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond),Valid: true},
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond),Valid: true},
+				},
+				{
+					ID: 3,
+					Name: "NaNa",
+					Sex: "Female",
+				},
+			},
+		},
+
+		//hard delete
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: []uint32{
+				1,
+				2,
+			},
+			expGot: []uint32{
+				1,
+				2,
+			},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			queryParams: QueryOption{HardDelete: true},
+		},
+
+		// Test the input is empty
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: []uint32{},
+			expGot: []uint32{},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				{
+					ID: 3,
+					Name: "NaNa",
+					Sex: "Female",
+				},
+			},
+			expErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+
+			cleanTables()
+
+			db, err := openDb()
+			req.Nil(err)
+			db = db.Debug()
+
+			db.Config.NowFunc = func() time.Time {
+				return mockTime
+			}
+
+			for _, seed := range tc.seeds {
+				err = db.Create(seed).Error
+				req.Nil(err)
+			}
+
+			errDelete := Repo{Model: tc.deletedModel}.Delete(db, tc.input, tc.queryParams)
+
+			req.Nil(errDelete)
+			req.Equal(tc.expErr, errDelete)
+
+			var dbAuthors []Author
+			db.Model(&Author{}).Unscoped().Select("Deleted","ID", "Name", "Sex").Find(&dbAuthors)
+			req.Equal(tc.expDbAuthor, dbAuthors)
 
 		}()
 	}
