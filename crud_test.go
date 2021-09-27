@@ -3,11 +3,13 @@ package pingorm
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/khaiql/dbcleaner"
 	"github.com/khaiql/dbcleaner/engine"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -826,6 +828,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	mockTime := time.Now()
 
 	tests := []struct {
 		seeds        []interface{}
@@ -866,14 +869,17 @@ func TestDelete(t *testing.T) {
 			deletedModel: &Author{},
 			expDbAuthor: []Author{
 				{
+				
 					ID:   1,
 					Name: "Henglong",
 					Sex:  "Male",
+					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond),Valid: true},
 				},
 				{
 					ID:   2,
 					Name: "Vicheka",
 					Sex:  "Male",
+					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond),Valid: true},
 				},
 				{
 					ID: 3,
@@ -974,6 +980,10 @@ func TestDelete(t *testing.T) {
 			req.Nil(err)
 			db = db.Debug()
 
+			db.Config.NowFunc = func() time.Time {
+				return mockTime
+			}
+
 			for _, seed := range tc.seeds {
 				err = db.Create(seed).Error
 				req.Nil(err)
@@ -985,7 +995,7 @@ func TestDelete(t *testing.T) {
 			req.Equal(tc.expErr, errDelete)
 
 			var dbAuthors []Author
-			db.Model(&Author{}).Unscoped().Select("id", "name", "sex").Find(&dbAuthors)
+			db.Model(&Author{}).Unscoped().Select("Deleted","ID", "Name", "Sex").Find(&dbAuthors)
 			req.Equal(tc.expDbAuthor, dbAuthors)
 
 		}()
