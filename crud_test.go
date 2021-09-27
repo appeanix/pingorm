@@ -1001,3 +1001,245 @@ func TestDelete(t *testing.T) {
 		}()
 	}
 }
+
+func TestUpdates(t *testing.T) {
+
+	tests := []struct {
+		seeds       []interface{}
+		inputIDs    interface{}
+		expGot      interface{}
+		expDbAuthor []Author
+		expDbBook   []Book
+		expDbEditor []Editor
+		inputValues interface{}
+		queryParams QueryOption
+	}{
+		//Updates Name and Sex where ID = 1
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []uint32{
+				1,
+			},
+			inputValues: &Author{
+				Name: "Henglong-Updated",
+				Sex:  "Male-Updated",
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong-Updated",
+					Sex:  "Male-Updated",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			expDbBook:   []Book{},
+			expDbEditor: []Editor{},
+		},
+
+		// Updates Sex where ID in (1,2)
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+				2,
+			},
+			expGot: []uint32{
+				1,
+				2,
+			},
+			inputValues: &Author{
+				Sex: "Male-Updated",
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male-Updated",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male-Updated",
+				},
+			},
+			expDbBook:   []Book{},
+			expDbEditor: []Editor{},
+		},
+
+		// It should updates fields of Author specified in the SeletedF
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+				2,
+			},
+			expGot: []uint32{
+				1,
+				2,
+			},
+			inputValues: &Author{
+				Name: "Henglong-Updated",
+				Sex:  "Male-Updated",
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong-Updated",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Henglong-Updated",
+					Sex:  "Male",
+				},
+			},
+			expDbBook:   []Book{},
+			expDbEditor: []Editor{},
+			queryParams: QueryOption{SelectedFields: []string{"Name"}},
+		},
+
+		// It should not create associated records.
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					AuthorID: 1,
+					EditorID: 1,
+					Title:    "Hello-World",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []uint32{
+				1,
+			},
+			inputValues: &Author{
+				Name: "Henglong-Updated",
+				Books: []Book{
+					{
+						Title:    "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong-Updated",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID:       1,
+					AuthorID: 1,
+					EditorID: 1,
+					Title:    "Hello-World",
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+
+			cleanTables()
+
+			db, err := openDb()
+			req.Nil(err)
+			db = db.Debug()
+
+			for _, seed := range tc.seeds {
+				err = db.Create(seed).Error
+				req.Nil(err)
+			}
+
+			errUpdates := Repo{}.Updates(db, tc.inputIDs, tc.inputValues, tc.queryParams)
+
+			req.Nil(errUpdates)
+
+			var dbAuthors []Author
+			db.Model(&Author{}).Select("ID", "Name", "Sex").Find(&dbAuthors)
+			req.Equal(tc.expDbAuthor, dbAuthors)
+
+			var dbBooks []Book
+			db.Model(&Book{}).Select("ID", "Title", "AuthorID", "EditorID").Find(&dbBooks)
+			req.Equal(tc.expDbBook, dbBooks)
+
+			var dbEditors []Editor
+			db.Model(&Editor{}).Select("ID", "Name", "Sex").Find(&dbEditors)
+			req.Equal(tc.expDbEditor, dbEditors)
+
+		}()
+	}
+}
