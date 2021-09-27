@@ -834,6 +834,7 @@ func TestDelete(t *testing.T) {
 		expGot       interface{}
 		expDbAuthor  []Author
 		queryParams  QueryOption
+		expErr error
 	}{
 		//soft delete
 		{
@@ -848,12 +849,19 @@ func TestDelete(t *testing.T) {
 					Name: "Vicheka",
 					Sex:  "Male",
 				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
 			},
 			input: []uint32{
 				1,
+				2,
 			},
 			expGot: []uint32{
 				1,
+				2,
 			},
 			deletedModel: &Author{},
 			expDbAuthor: []Author{
@@ -866,6 +874,11 @@ func TestDelete(t *testing.T) {
 					ID:   2,
 					Name: "Vicheka",
 					Sex:  "Male",
+				},
+				{
+					ID: 3,
+					Name: "NaNa",
+					Sex: "Female",
 				},
 			},
 		},
@@ -883,13 +896,52 @@ func TestDelete(t *testing.T) {
 					Name: "Vicheka",
 					Sex:  "Male",
 				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
 			},
 			input: []uint32{
+				1,
 				2,
 			},
 			expGot: []uint32{
+				1,
 				2,
 			},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			queryParams: QueryOption{HardDelete: true},
+		},
+
+		// Test the input is empty
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: []uint32{},
+			expGot: []uint32{},
 			deletedModel: &Author{},
 			expDbAuthor: []Author{
 				{
@@ -897,8 +949,18 @@ func TestDelete(t *testing.T) {
 					Name: "Henglong",
 					Sex:  "Male",
 				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				{
+					ID: 3,
+					Name: "NaNa",
+					Sex: "Female",
+				},
 			},
-			queryParams: QueryOption{HardDelete: true},
+			expErr: nil,
 		},
 	}
 
@@ -920,6 +982,7 @@ func TestDelete(t *testing.T) {
 			errDelete := Repo{Model: tc.deletedModel}.Delete(db, tc.input, tc.queryParams)
 
 			req.Nil(errDelete)
+			req.Equal(tc.expErr, errDelete)
 
 			var dbAuthors []Author
 			db.Model(&Author{}).Unscoped().Select("id", "name", "sex").Find(&dbAuthors)
