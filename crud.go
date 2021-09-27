@@ -74,7 +74,7 @@ func (repo Repo) Updates(_db interface{}, sliceOfIDs interface{}, values interfa
 	}
 
 	db := _db.(*gorm.DB)
-	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
+	db = db.Select(option.GetSelectedFields()).Omit(append(option.GetOmittedFields(), clause.Associations)...)
 	
 	return db.Where("id IN ?", sliceOfIDs).Updates(values).Error
 }

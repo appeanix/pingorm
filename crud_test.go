@@ -934,9 +934,11 @@ func TestUpdates(t *testing.T) {
 			},
 			inputIDs: []uint32{
 				1,
+				2,
 			},
 			expGot: []uint32{
 				1,
+				2,
 			},
 			inputValues: &Author{
 				Name: "Henglong-Updated",
@@ -950,7 +952,7 @@ func TestUpdates(t *testing.T) {
 				},
 				{
 					ID:   2,
-					Name: "Vicheka",
+					Name: "Henglong-Updated",
 					Sex:  "Male",
 				},
 			},
@@ -959,7 +961,7 @@ func TestUpdates(t *testing.T) {
 			queryParams: QueryOption{SelectedFields: []string{"Name"}},
 		},
 
-		// It doesn't create the association of target. It should updates fields of target specified in the selectedF.
+		// It should not create associated records.
 		{
 			seeds: []interface{}{
 				&Author{
@@ -1027,7 +1029,6 @@ func TestUpdates(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			queryParams: QueryOption{SelectedFields: []string{"Name"}},
 		},
 	}
 
@@ -1051,15 +1052,15 @@ func TestUpdates(t *testing.T) {
 			req.Nil(errUpdates)
 
 			var dbAuthors []Author
-			db.Model(&Author{}).Select("id", "name", "sex").Find(&dbAuthors)
+			db.Model(&Author{}).Select("ID", "Name", "Sex").Find(&dbAuthors)
 			req.Equal(tc.expDbAuthor, dbAuthors)
 
 			var dbBooks []Book
-			db.Model(&Book{}).Select("id", "title", "author_id", "editor_id").Find(&dbBooks)
+			db.Model(&Book{}).Select("ID", "Title", "AuthorID", "EditorID").Find(&dbBooks)
 			req.Equal(tc.expDbBook, dbBooks)
 
 			var dbEditors []Editor
-			db.Model(&Editor{}).Select("id", "name", "sex").Find(&dbEditors)
+			db.Model(&Editor{}).Select("ID", "Name", "Sex").Find(&dbEditors)
 			req.Equal(tc.expDbEditor, dbEditors)
 
 		}()
