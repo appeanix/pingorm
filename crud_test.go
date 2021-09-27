@@ -829,10 +829,12 @@ func TestUpdates(t *testing.T) {
 
 	tests := []struct {
 		seeds       []interface{}
-		input       interface{}
+		inputIDs    interface{}
 		expGot      interface{}
 		expDbAuthor []Author
-		values      interface{}
+		expDbBook   []Book
+		expDbEditor []Editor
+		inputValues interface{}
 		queryParams QueryOption
 	}{
 		//Updates Name and Sex where ID = 1
@@ -849,13 +851,13 @@ func TestUpdates(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			input: []uint32{
+			inputIDs: []uint32{
 				1,
 			},
 			expGot: []uint32{
 				1,
 			},
-			values: &Author{
+			inputValues: &Author{
 				Name: "Henglong-Updated",
 				Sex:  "Male-Updated",
 			},
@@ -871,6 +873,8 @@ func TestUpdates(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
+			expDbBook:   []Book{},
+			expDbEditor: []Editor{},
 		},
 
 		// Updates Sex where ID in (1,2)
@@ -887,7 +891,7 @@ func TestUpdates(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			input: []uint32{
+			inputIDs: []uint32{
 				1,
 				2,
 			},
@@ -895,8 +899,8 @@ func TestUpdates(t *testing.T) {
 				1,
 				2,
 			},
-			values: &Author{
-				Sex:  "Male-Updated",
+			inputValues: &Author{
+				Sex: "Male-Updated",
 			},
 			expDbAuthor: []Author{
 				{
@@ -910,6 +914,8 @@ func TestUpdates(t *testing.T) {
 					Sex:  "Male-Updated",
 				},
 			},
+			expDbBook:   []Book{},
+			expDbEditor: []Editor{},
 		},
 
 		// It should updates fields of Author specified in the SeletedF
@@ -926,15 +932,15 @@ func TestUpdates(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			input: []uint32{
+			inputIDs: []uint32{
 				1,
 			},
 			expGot: []uint32{
 				1,
 			},
-			values: &Author{
+			inputValues: &Author{
 				Name: "Henglong-Updated",
-				Sex: "Male-Updated",
+				Sex:  "Male-Updated",
 			},
 			expDbAuthor: []Author{
 				{
@@ -945,6 +951,79 @@ func TestUpdates(t *testing.T) {
 				{
 					ID:   2,
 					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			expDbBook:   []Book{},
+			expDbEditor: []Editor{},
+			queryParams: QueryOption{SelectedFields: []string{"Name"}},
+		},
+
+		// It doesn't create the association of target. It should updates fields of target specified in the selectedF.
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					AuthorID: 1,
+					EditorID: 1,
+					Title:    "Hello-World",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []uint32{
+				1,
+			},
+			inputValues: &Author{
+				Name: "Henglong-Updated",
+				Books: []Book{
+					{
+						Title:    "New-Book",
+						AuthorID: 1,
+						EditorID: 1,
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "Henglong-Updated",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID:       1,
+					AuthorID: 1,
+					EditorID: 1,
+					Title:    "Hello-World",
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID:   1,
+					Name: "Henglong",
 					Sex:  "Male",
 				},
 			},
@@ -967,13 +1046,21 @@ func TestUpdates(t *testing.T) {
 				req.Nil(err)
 			}
 
-			errUpdates := Repo{}.Updates(db, tc.input, tc.values, tc.queryParams)
+			errUpdates := Repo{}.Updates(db, tc.inputIDs, tc.inputValues, tc.queryParams)
 
 			req.Nil(errUpdates)
 
 			var dbAuthors []Author
 			db.Model(&Author{}).Select("id", "name", "sex").Find(&dbAuthors)
 			req.Equal(tc.expDbAuthor, dbAuthors)
+
+			var dbBooks []Book
+			db.Model(&Book{}).Select("id", "title", "author_id", "editor_id").Find(&dbBooks)
+			req.Equal(tc.expDbBook, dbBooks)
+
+			var dbEditors []Editor
+			db.Model(&Editor{}).Select("id", "name", "sex").Find(&dbEditors)
+			req.Equal(tc.expDbEditor, dbEditors)
 
 		}()
 	}
