@@ -18,9 +18,14 @@ func (repo Repo) Create(_db interface{}, model interface{}, option QuerySelector
 		return nil, err
 	}
 
-	db := _db.(*gorm.DB)
-	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
-	err = db.Create(ptrToModel).Error
+	db := _db.(*gorm.DB).
+		Session(&gorm.Session{NewDB: true}).
+		Set("value:update_on_conflict", option.GetUpdatesOnConflict())
+
+	err = db.Select(option.GetSelectedFields()).
+		Omit(option.GetOmittedFields()...).
+		Create(ptrToModel).Error
+
 	return ptrToModel, err
 }
 
@@ -75,7 +80,7 @@ func (repo Repo) Updates(_db interface{}, sliceOfIDs interface{}, values interfa
 
 	db := _db.(*gorm.DB)
 	db = db.Select(option.GetSelectedFields()).Omit(append(option.GetOmittedFields(), clause.Associations)...)
-	
+
 	return db.Where("id IN ?", sliceOfIDs).Updates(values).Error
 }
 

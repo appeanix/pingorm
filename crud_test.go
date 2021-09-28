@@ -118,16 +118,16 @@ func cleanTables() {
 func TestCreate(t *testing.T) {
 
 	tests := []struct {
-		seeds       []interface{}
-		input       interface{}
-		expGot      interface{}
-		expDbAuthor []Author
-		expDbBook   []Book
-		expDbEditor []Editor
-		queryParams QueryOption
-		expErr      interface{}
+		seeds            []interface{}
+		input            interface{}
+		inputQueryParams QueryOption
+		expGot           interface{}
+		expDbAuthor      []Author
+		expDbBook        []Book
+		expDbEditor      []Editor
+		expErr           interface{}
 	}{
-		//Create only the Author
+		// It should create only Author
 		{
 			seeds: []interface{}{
 				&Author{
@@ -162,7 +162,7 @@ func TestCreate(t *testing.T) {
 			expErr:      nil,
 		},
 
-		// Create Author along with a new associated Book
+		// It should create Author along with a new associated Book
 		{
 			seeds: []interface{}{
 				&Author{
@@ -189,7 +189,6 @@ func TestCreate(t *testing.T) {
 					{
 						Title:    "New-Book",
 						EditorID: 1,
-						AuthorID: 1,
 					},
 				},
 			},
@@ -242,17 +241,22 @@ func TestCreate(t *testing.T) {
 			expErr: nil,
 		},
 
-		// It should create Author and ignore updating existing Book
+		// It should
+		// 1. create Author,
+		// 2. update existing Book (ID 1),
+		// 3. update association Editor (ID 1),
+		// 4. create a new associated Book
+		// 5. create a new associated Editor
 		{
 			seeds: []interface{}{
 				&Author{
 					ID:   1,
-					Name: "Henglong",
+					Name: "Vichheka",
 					Sex:  "Male",
 				},
 				&Editor{
 					ID:   1,
-					Name: "Henglong",
+					Name: "HengLong",
 					Sex:  "Male",
 				},
 				&Book{
@@ -263,20 +267,40 @@ func TestCreate(t *testing.T) {
 				},
 			},
 			input: Author{
-				Name: "Vicheka",
+				Name: "New Author",
 				Sex:  "Male",
 				Books: []Book{
 					{
-						ID:       1,
-						Title:    "Hello-World-Updated",
-						AuthorID: 1,
-						EditorID: 1,
+						ID:    1,
+						Title: "Hello-World-Updated",
+						Editor: Editor{
+							ID:   1,
+							Name: "HengLong-Updated",
+						},
+					},
+					{
+						Title: "New Book",
+						Editor: Editor{
+							Name: "New Editor",
+							Sex:  "Female",
+						},
+					},
+				},
+			},
+			inputQueryParams: QueryOption{
+				UpdatesOnConflict: map[string][]string{
+					"Book": {
+						"AuthorID",
+						"Title",
+					},
+					"Editor": {
+						"Name",
 					},
 				},
 			},
 			expGot: &Author{
 				ID:   2,
-				Name: "Vicheka",
+				Name: "New Author",
 				Sex:  "Male",
 				Books: []Book{
 					{
@@ -284,18 +308,33 @@ func TestCreate(t *testing.T) {
 						Title:    "Hello-World-Updated",
 						AuthorID: 2,
 						EditorID: 1,
+						Editor: Editor{
+							ID:   1,
+							Name: "HengLong-Updated",
+						},
+					},
+					{
+						ID:       2,
+						Title:    "New Book",
+						AuthorID: 2,
+						EditorID: 2,
+						Editor: Editor{
+							ID:   2,
+							Name: "New Editor",
+							Sex:  "Female",
+						},
 					},
 				},
 			},
 			expDbAuthor: []Author{
 				{
 					ID:   1,
-					Name: "Henglong",
+					Name: "Vichheka",
 					Sex:  "Male",
 				},
 				{
 					ID:   2,
-					Name: "Vicheka",
+					Name: "New Author",
 					Sex:  "Male",
 				},
 			},
@@ -304,14 +343,25 @@ func TestCreate(t *testing.T) {
 					ID:       1,
 					AuthorID: 2,
 					EditorID: 1,
-					Title:    "Hello-World",
+					Title:    "Hello-World-Updated",
+				},
+				{
+					ID:       2,
+					AuthorID: 2,
+					EditorID: 2,
+					Title:    "New Book",
 				},
 			},
 			expDbEditor: []Editor{
 				{
 					ID:   1,
-					Name: "Henglong",
+					Name: "HengLong-Updated",
 					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "New Editor",
+					Sex:  "Female",
 				},
 			},
 			expErr: nil,
@@ -392,8 +442,8 @@ func TestCreate(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			queryParams: QueryOption{SelectedFields: []string{"ID", "Name", "Sex", "ContactNumber"}},
-			expErr:      nil,
+			inputQueryParams: QueryOption{SelectedFields: []string{"ID", "Name", "Sex", "ContactNumber"}},
+			expErr:           nil,
 		},
 
 		//Create Author and ignore creating and updating associations using Omit
@@ -466,8 +516,8 @@ func TestCreate(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			queryParams: QueryOption{OmittedFields: []string{"Books"}},
-			expErr:      nil,
+			inputQueryParams: QueryOption{OmittedFields: []string{"Books"}},
+			expErr:           nil,
 		},
 
 		// Create duplicate Author should return error
@@ -502,7 +552,7 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
+	for _, tc := range tests[2:3] {
 		func() {
 			req := require.New(t)
 
@@ -517,7 +567,7 @@ func TestCreate(t *testing.T) {
 				req.Nil(err)
 			}
 
-			got, err := Repo{}.Create(db, tc.input, tc.queryParams)
+			got, err := Repo{}.Create(db, tc.input, tc.inputQueryParams)
 
 			req.Equal(tc.expGot, got)
 			req.Equal(tc.expErr, err)
@@ -837,7 +887,7 @@ func TestDelete(t *testing.T) {
 		expGot       interface{}
 		expDbAuthor  []Author
 		queryParams  QueryOption
-		expErr error
+		expErr       error
 	}{
 		//soft delete
 		{
@@ -869,22 +919,22 @@ func TestDelete(t *testing.T) {
 			deletedModel: &Author{},
 			expDbAuthor: []Author{
 				{
-				
-					ID:   1,
-					Name: "Henglong",
-					Sex:  "Male",
-					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond),Valid: true},
+
+					ID:      1,
+					Name:    "Henglong",
+					Sex:     "Male",
+					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond), Valid: true},
 				},
 				{
-					ID:   2,
-					Name: "Vicheka",
-					Sex:  "Male",
-					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond),Valid: true},
+					ID:      2,
+					Name:    "Vicheka",
+					Sex:     "Male",
+					Deleted: gorm.DeletedAt{Time: mockTime.Round(time.Millisecond), Valid: true},
 				},
 				{
-					ID: 3,
+					ID:   3,
 					Name: "NaNa",
-					Sex: "Female",
+					Sex:  "Female",
 				},
 			},
 		},
@@ -946,8 +996,8 @@ func TestDelete(t *testing.T) {
 					Sex:  "Female",
 				},
 			},
-			input: []uint32{},
-			expGot: []uint32{},
+			input:        []uint32{},
+			expGot:       []uint32{},
 			deletedModel: &Author{},
 			expDbAuthor: []Author{
 				{
@@ -961,9 +1011,9 @@ func TestDelete(t *testing.T) {
 					Sex:  "Male",
 				},
 				{
-					ID: 3,
+					ID:   3,
 					Name: "NaNa",
-					Sex: "Female",
+					Sex:  "Female",
 				},
 			},
 			expErr: nil,
@@ -995,7 +1045,7 @@ func TestDelete(t *testing.T) {
 			req.Equal(tc.expErr, errDelete)
 
 			var dbAuthors []Author
-			db.Model(&Author{}).Unscoped().Select("Deleted","ID", "Name", "Sex").Find(&dbAuthors)
+			db.Model(&Author{}).Unscoped().Select("Deleted", "ID", "Name", "Sex").Find(&dbAuthors)
 			req.Equal(tc.expDbAuthor, dbAuthors)
 
 		}()

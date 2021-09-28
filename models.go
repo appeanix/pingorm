@@ -45,16 +45,17 @@ type (
 
 type (
 	QueryOption struct {
-		SelectedFields  []string
-		OmittedFields   []string
-		PreloadedFields []string
-		HardDelete      bool
+		SelectedFields    []string
+		OmittedFields     []string
+		PreloadedFields   []string
+		UpdatesOnConflict map[string][]string
+		HardDelete        bool
 	}
 
 	QuerySelector interface {
 		GetSelectedFields() []string
 		GetOmittedFields() []string
-		GetPreloadedFields() []string
+		GetUpdatesOnConflict() map[string][]string
 		IsHardDelete() bool
 	}
 )
@@ -67,8 +68,8 @@ func (option QueryOption) GetOmittedFields() []string {
 	return option.OmittedFields
 }
 
-func (option QueryOption) GetPreloadedFields() []string {
-	return option.PreloadedFields
+func (option QueryOption) GetUpdatesOnConflict() map[string][]string {
+	return option.UpdatesOnConflict
 }
 
 func (option QueryOption) IsHardDelete() bool {
