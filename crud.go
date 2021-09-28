@@ -35,7 +35,10 @@ func (repo Repo) Update(_db interface{}, model interface{}, option QuerySelector
 		return nil, err
 	}
 
-	db := _db.(*gorm.DB)
+	db := _db.(*gorm.DB).
+	Session(&gorm.Session{NewDB: true}).
+	Set("value:update_on_conflict", option.GetUpdatesOnConflict())
+
 	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
 	err = db.Updates(ptrToModel).Error
 	return ptrToModel, err
