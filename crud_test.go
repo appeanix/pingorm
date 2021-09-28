@@ -879,7 +879,7 @@ func TestUpdate(t *testing.T) {
 						AuthorID: 1,
 						EditorID: 1,
 						Editor: Editor{
-							ID: 1,
+							ID:   1,
 							Name: "Lego-Updated",
 						},
 					},
@@ -904,7 +904,7 @@ func TestUpdate(t *testing.T) {
 						AuthorID: 1,
 						EditorID: 1,
 						Editor: Editor{
-							ID: 1,
+							ID:   1,
 							Name: "Lego-Updated",
 						},
 					},
@@ -1431,32 +1431,129 @@ func TestGet(t *testing.T) {
 		queryParams QueryOption
 		model       interface{}
 	}{
-		//Get Author where ID = 1
-		{
-			seeds: []interface{}{
-				&Author{
-					ID:   1,
-					Name: "Henglong",
-					Sex:  "Male",
-				},
-				&Author{
-					ID:   2,
-					Name: "Vicheka",
-					Sex:  "Male",
-				},
-			},
-			inputIDs: []uint32{
-				1,
-			},
-			expGot: []Author{
-				{
-					ID:   1,
-					Name: "Henglong",
-					Sex:  "Male",
-				},
-			},
-			model: &Author{},
-		},
+		// //Get Author where ID = 1
+		// {
+		// 	seeds: []interface{}{
+		// 		&Author{
+		// 			ID:   1,
+		// 			Name: "Henglong",
+		// 			Sex:  "Male",
+		// 		},
+		// 		&Author{
+		// 			ID:   2,
+		// 			Name: "Vicheka",
+		// 			Sex:  "Male",
+		// 		},
+		// 	},
+		// 	inputIDs: []uint32{
+		// 		1,
+		// 	},
+		// 	expGot: []Author{
+		// 		{
+		// 			ID:   1,
+		// 			Name: "Henglong",
+		// 			Sex:  "Male",
+		// 		},
+		// 	},
+		// 	model: &Author{},
+		// },
+
+		// //Get Author where ID in (1,2)
+		// {
+		// 	seeds: []interface{}{
+		// 		&Author{
+		// 			ID:   1,
+		// 			Name: "Henglong",
+		// 			Sex:  "Male",
+		// 		},
+		// 		&Author{
+		// 			ID:   2,
+		// 			Name: "Vicheka",
+		// 			Sex:  "Male",
+		// 		},
+		// 	},
+		// 	inputIDs: []uint32{
+		// 		1,
+		// 		2,
+		// 	},
+		// 	expGot: []Author{
+		// 		{
+		// 			ID:   1,
+		// 			Name: "Henglong",
+		// 			Sex:  "Male",
+		// 		},
+		// 		{
+		// 			ID:   2,
+		// 			Name: "Vicheka",
+		// 			Sex:  "Male",
+		// 		},
+		// 	},
+		// 	model: &Author{},
+		// },
+
+		// // It should Get fields of Author specified in the SeletedF
+		// {
+		// 	seeds: []interface{}{
+		// 		&Author{
+		// 			ID:   1,
+		// 			Name: "Henglong",
+		// 			Sex:  "Male",
+		// 		},
+		// 		&Author{
+		// 			ID:   2,
+		// 			Name: "Vicheka",
+		// 			Sex:  "Male",
+		// 		},
+		// 	},
+		// 	inputIDs: []uint32{
+		// 		1,
+		// 		2,
+		// 	},
+		// 	expGot: []Author{
+		// 		{
+		// 			ID:   1,
+		// 			Name: "Henglong",
+		// 		},
+		// 		{
+		// 			ID:   2,
+		// 			Name: "Vicheka",
+		// 		},
+		// 	},
+		// 	model:       &Author{},
+		// 	queryParams: QueryOption{SelectedFields: []string{"Name", "ID"}},
+		// },
+
+		// // It should Get all fields of Author except an omitted field
+		// {
+		// 	seeds: []interface{}{
+		// 		&Author{
+		// 			ID:   1,
+		// 			Name: "Henglong",
+		// 			Sex:  "Male",
+		// 		},
+		// 		&Author{
+		// 			ID:   2,
+		// 			Name: "Vicheka",
+		// 			Sex:  "Male",
+		// 		},
+		// 	},
+		// 	inputIDs: []uint32{
+		// 		1,
+		// 		2,
+		// 	},
+		// 	expGot: []Author{
+		// 		{
+		// 			ID:  1,
+		// 			Sex: "Male",
+		// 		},
+		// 		{
+		// 			ID:  2,
+		// 			Sex: "Male",
+		// 		},
+		// 	},
+		// 	model:       &Author{},
+		// 	queryParams: QueryOption{OmittedFields: []string{"Name"}},
+		// },
 
 		//Get Author where ID in (1,2)
 		{
@@ -1471,88 +1568,37 @@ func TestGet(t *testing.T) {
 					Name: "Vicheka",
 					Sex:  "Male",
 				},
+				&Editor{
+					ID:   1,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
 			},
 			inputIDs: []uint32{
 				1,
-				2,
 			},
 			expGot: []Author{
 				{
 					ID:   1,
 					Name: "Henglong",
 					Sex:  "Male",
-				},
-				{
-					ID:   2,
-					Name: "Vicheka",
-					Sex:  "Male",
+					Books: []Book{
+						{
+							ID: 1,
+							AuthorID: 1,
+							EditorID: 1,
+							Title: "Hello-World",
+						},
+					},
 				},
 			},
 			model: &Author{},
-		},
-
-		// It should Get fields of Author specified in the SeletedF
-		{
-			seeds: []interface{}{
-				&Author{
-					ID:   1,
-					Name: "Henglong",
-					Sex:  "Male",
-				},
-				&Author{
-					ID:   2,
-					Name: "Vicheka",
-					Sex:  "Male",
-				},
-			},
-			inputIDs: []uint32{
-				1,
-				2,
-			},
-			expGot: []Author{
-				{
-					ID:   1,
-					Name: "Henglong",
-				},
-				{
-					ID:   2,
-					Name: "Vicheka",
-				},
-			},
-			model:       &Author{},
-			queryParams: QueryOption{SelectedFields: []string{"Name", "ID"}},
-		},
-
-		// It should Get all fields of Author except an omitted field
-		{
-			seeds: []interface{}{
-				&Author{
-					ID:   1,
-					Name: "Henglong",
-					Sex:  "Male",
-				},
-				&Author{
-					ID:   2,
-					Name: "Vicheka",
-					Sex:  "Male",
-				},
-			},
-			inputIDs: []uint32{
-				1,
-				2,
-			},
-			expGot: []Author{
-				{
-					ID:  1,
-					Sex: "Male",
-				},
-				{
-					ID:  2,
-					Sex: "Male",
-				},
-			},
-			model:       &Author{},
-			queryParams: QueryOption{OmittedFields: []string{"Name"}},
 		},
 	}
 

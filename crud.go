@@ -105,6 +105,7 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 	db.Model(repo.Model).
 		Select(option.GetSelectedFields()).
 		Omit(option.GetOmittedFields()...).Where("id IN ?", sliceOfIDs).
+		Preload(clause.Associations).
 		Find(ptrSliceT)
 		
 	sliceT = reflect.ValueOf(ptrSliceT).Elem().Interface()
