@@ -840,6 +840,243 @@ func TestUpdate(t *testing.T) {
 			},
 			queryParams: QueryOption{},
 		},
+
+		// It should
+		// 1. Update Author,
+		// 2. update existing Book (ID 1),
+		// 3. update association Editor (ID 1),
+		// 4. create a new associated Book
+		// 5. create a new associated Editor
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:            1,
+					Name:          "Henglong",
+					Sex:           "Male",
+					ContactNumber: "1234567890",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Lego",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			input: Author{
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID:       1,
+						Title:    "Hello-World-Updated",
+						AuthorID: 1,
+						EditorID: 1,
+						Editor: Editor{
+							ID:   1,
+							Name: "Lego-Updated",
+						},
+					},
+					{
+						Title: "New-Book",
+						Editor: Editor{
+							Name: "New Editor",
+							Sex:  "Female",
+						},
+					},
+				},
+			},
+			expGot: &Author{
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID:       1,
+						Title:    "Hello-World-Updated",
+						AuthorID: 1,
+						EditorID: 1,
+						Editor: Editor{
+							ID:   1,
+							Name: "Lego-Updated",
+						},
+					},
+					{
+						ID:       2,
+						Title:    "New-Book",
+						AuthorID: 1,
+						EditorID: 2,
+						Editor: Editor{
+							ID:   2,
+							Name: "New Editor",
+							Sex:  "Female",
+						},
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:            1,
+					Name:          "Henglong-Updated",
+					Sex:           "Male-Updated",
+					ContactNumber: "1234567890-Updated",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID:       1,
+					Title:    "Hello-World-Updated",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+				{
+					ID:       2,
+					Title:    "New-Book",
+					AuthorID: 1,
+					EditorID: 2,
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID:   1,
+					Name: "Lego-Updated",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "New Editor",
+					Sex:  "Female",
+				},
+			},
+			queryParams: QueryOption{
+				UpdatesOnConflict: map[string][]string{
+					"Book": {
+						"AuthorID",
+						"Title",
+					},
+					"Editor": {
+						"Name",
+					},
+				},
+			},
+		},
+
+		//It should Update fields of Author specified in the selectedF. Book and Editor is not updated and created new
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:            1,
+					Name:          "Henglong",
+					Sex:           "Male",
+					ContactNumber: "1234567890",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Lego",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			input: Author{
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID:       1,
+						Title:    "Hello-World-Updated",
+						AuthorID: 1,
+						EditorID: 1,
+						Editor: Editor{
+							ID:   1,
+							Name: "Lego-Updated",
+						},
+					},
+					{
+						Title: "New-Book",
+						Editor: Editor{
+							Name: "New Editor",
+							Sex:  "Female",
+						},
+					},
+				},
+			},
+			expGot: &Author{
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID:       1,
+						Title:    "Hello-World-Updated",
+						AuthorID: 1,
+						EditorID: 1,
+						Editor: Editor{
+							ID:   1,
+							Name: "Lego-Updated",
+						},
+					},
+					{
+						Title:    "New-Book",
+						Editor: Editor{
+							Name: "New Editor",
+							Sex:  "Female",
+						},
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:            1,
+					Name:          "Henglong-Updated",
+					Sex:           "Male-Updated",
+					ContactNumber: "1234567890",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID:   1,
+					Name: "Lego",
+					Sex:  "Male",
+				},
+			},
+			queryParams: QueryOption{
+				SelectedFields: []string{"ID","Name","Sex"},
+				UpdatesOnConflict: map[string][]string{
+					"Book": {
+						"AuthorID",
+						"Title",
+					},
+					"Editor": {
+						"Name",
+					},
+				},
+			},
+		},
+
+
 	}
 	for _, tc := range tests {
 		func() {
@@ -1356,9 +1593,9 @@ func TestGet(t *testing.T) {
 					Sex:  "Male",
 				},
 				{
-					ID: 2,
+					ID:   2,
 					Name: "Vicheka",
-					Sex: "Male",
+					Sex:  "Male",
 				},
 			},
 			model: &Author{},
@@ -1388,15 +1625,15 @@ func TestGet(t *testing.T) {
 					Name: "Henglong",
 				},
 				{
-					ID: 2,
+					ID:   2,
 					Name: "Vicheka",
 				},
 			},
-			model: &Author{},
+			model:       &Author{},
 			queryParams: QueryOption{SelectedFields: []string{"Name", "ID"}},
 		},
 
-		// It should Get all fields of Author except an omitted field 
+		// It should Get all fields of Author except an omitted field
 		{
 			seeds: []interface{}{
 				&Author{
@@ -1416,16 +1653,162 @@ func TestGet(t *testing.T) {
 			},
 			expGot: []Author{
 				{
-					ID:   1,
+					ID:  1,
 					Sex: "Male",
 				},
 				{
-					ID: 2,
+					ID:  2,
 					Sex: "Male",
 				},
 			},
-			model: &Author{},
+			model:       &Author{},
 			queryParams: QueryOption{OmittedFields: []string{"Name"}},
+		},
+
+		//It should Get fields of Author and it association speciied in the PreloadedF
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+					Books: []Book{
+						{
+							ID: 1,
+							AuthorID: 1,
+							EditorID: 1,
+							Title: "Hello-World",
+						},
+					},
+				},
+			},
+			queryParams: QueryOption{PreloadedFields: []string{"Books"}},
+			model: &Author{},
+		},
+
+		//It should Get fields of Author and it association speciied in the PreloadedF
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+					Books: []Book{
+						{
+							ID: 1,
+							AuthorID: 1,
+							EditorID: 1,
+							Title: "Hello-World",
+							Editor: Editor{
+								ID: 1,
+								Name: "Vicheka",
+								Sex: "Male",
+							},
+						},
+					},
+				},
+			},
+			queryParams: QueryOption{PreloadedFields: []string{"Books.Editor"}},
+			model: &Author{},
+		},
+
+		//It should Get fields of Author and it association speciied in the PreloadedF
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+					Books: []Book{
+						{
+							ID: 1,
+							Title: "Hello-World",
+							EditorID: 1,
+							AuthorID: 1,
+						},
+					},
+				},
+			},
+			queryParams: QueryOption{PreloadedFields: []string{"Books.Title"}},
+			model: &Author{},
 		},
 	}
 

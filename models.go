@@ -57,6 +57,7 @@ type (
 		GetOmittedFields() []string
 		GetUpdatesOnConflict() map[string][]string
 		IsHardDelete() bool
+		GetPreloadedFields() []string
 	}
 )
 
@@ -74,4 +75,8 @@ func (option QueryOption) GetUpdatesOnConflict() map[string][]string {
 
 func (option QueryOption) IsHardDelete() bool {
 	return option.HardDelete
+}
+
+func (option QueryOption) GetPreloadedFields() []string {
+	return option.PreloadedFields
 }
