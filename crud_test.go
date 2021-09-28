@@ -967,6 +967,116 @@ func TestUpdate(t *testing.T) {
 				},
 			},
 		},
+
+		//It should Update fields of Author specified in the selectedF. Book and Editor is not updated and created new
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:            1,
+					Name:          "Henglong",
+					Sex:           "Male",
+					ContactNumber: "1234567890",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Lego",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			input: Author{
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID:       1,
+						Title:    "Hello-World-Updated",
+						AuthorID: 1,
+						EditorID: 1,
+						Editor: Editor{
+							ID:   1,
+							Name: "Lego-Updated",
+						},
+					},
+					{
+						Title: "New-Book",
+						Editor: Editor{
+							Name: "New Editor",
+							Sex:  "Female",
+						},
+					},
+				},
+			},
+			expGot: &Author{
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
+				ContactNumber: "1234567890-Updated",
+				Books: []Book{
+					{
+						ID:       1,
+						Title:    "Hello-World-Updated",
+						AuthorID: 1,
+						EditorID: 1,
+						Editor: Editor{
+							ID:   1,
+							Name: "Lego-Updated",
+						},
+					},
+					{
+						Title:    "New-Book",
+						Editor: Editor{
+							Name: "New Editor",
+							Sex:  "Female",
+						},
+					},
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:            1,
+					Name:          "Henglong-Updated",
+					Sex:           "Male-Updated",
+					ContactNumber: "1234567890",
+				},
+			},
+			expDbBook: []Book{
+				{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			expDbEditor: []Editor{
+				{
+					ID:   1,
+					Name: "Lego",
+					Sex:  "Male",
+				},
+			},
+			queryParams: QueryOption{
+				SelectedFields: []string{"ID","Name","Sex"},
+				UpdatesOnConflict: map[string][]string{
+					"Book": {
+						"AuthorID",
+						"Title",
+					},
+					"Editor": {
+						"Name",
+					},
+				},
+			},
+		},
+
+
 	}
 	for _, tc := range tests {
 		func() {
