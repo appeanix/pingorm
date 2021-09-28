@@ -2,6 +2,7 @@ package pingorm
 
 import (
 	"errors"
+
 	"testing"
 	"time"
 
@@ -1289,6 +1290,167 @@ func TestUpdates(t *testing.T) {
 			var dbEditors []Editor
 			db.Model(&Editor{}).Select("ID", "Name", "Sex").Find(&dbEditors)
 			req.Equal(tc.expDbEditor, dbEditors)
+
+		}()
+	}
+}
+
+func TestGet(t *testing.T) {
+
+	tests := []struct {
+		seeds       []interface{}
+		inputIDs    interface{}
+		expGot      interface{}
+		queryParams QueryOption
+		model       interface{}
+	}{
+		//Get Author where ID = 1
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+			},
+			model: &Author{},
+		},
+
+		//Get Author where ID in (1,2)
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+				2,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				{
+					ID: 2,
+					Name: "Vicheka",
+					Sex: "Male",
+				},
+			},
+			model: &Author{},
+		},
+
+		// It should Get fields of Author specified in the SeletedF
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+				2,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+				},
+				{
+					ID: 2,
+					Name: "Vicheka",
+				},
+			},
+			model: &Author{},
+			queryParams: QueryOption{SelectedFields: []string{"Name", "ID"}},
+		},
+
+		// It should Get all fields of Author except an omitted field 
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+				2,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Sex: "Male",
+				},
+				{
+					ID: 2,
+					Sex: "Male",
+				},
+			},
+			model: &Author{},
+			queryParams: QueryOption{OmittedFields: []string{"Name"}},
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+
+			cleanTables()
+
+			db, err := openDb()
+			req.Nil(err)
+			db = db.Debug()
+
+			for _, seed := range tc.seeds {
+				err = db.Create(seed).Error
+				req.Nil(err)
+			}
+
+			got, errGet := Repo{Model: tc.model}.Get(db, tc.inputIDs, tc.queryParams)
+
+			req.Nil(errGet)
+			req.Equal(tc.expGot, got)
+
+			var dbAuthors []Author
+			db.Model(&Author{}).Select("ID", "Name", "Sex").Find(&dbAuthors)
 
 		}()
 	}

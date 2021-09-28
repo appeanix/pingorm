@@ -84,6 +84,30 @@ func (repo Repo) Updates(_db interface{}, sliceOfIDs interface{}, values interfa
 	return db.Where("id IN ?", sliceOfIDs).Updates(values).Error
 }
 
+func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelector) (sliceT interface{}, err error) {
+
+	var ptrSliceT interface{}
+	if mt := reflect.TypeOf(repo.Model); mt.Kind() == reflect.Ptr {
+		ptrSliceT = reflect.New(
+			reflect.MakeSlice(reflect.SliceOf(mt.Elem()), 0, 0).Type(),
+		).Interface()
+
+	} else {
+		ptrSliceT = reflect.New(
+			reflect.MakeSlice(reflect.SliceOf(mt), 0, 0).Type(),
+		).Interface()
+	}
+
+	db := _db.(*gorm.DB)
+	db.Model(repo.Model).
+		Select(option.GetSelectedFields()).
+		Omit(option.GetOmittedFields()...).Where("id IN ?", sliceOfIDs).
+		Find(ptrSliceT)
+		
+	sliceT = reflect.ValueOf(ptrSliceT).Elem().Interface()
+	return sliceT, err
+}
+
 func parseModelToPtr(model interface{}) (interface{}, error) {
 	if modelType := reflect.TypeOf(model); modelType.Kind() == reflect.Struct {
 		ptrToModelVal := reflect.New(modelType)
