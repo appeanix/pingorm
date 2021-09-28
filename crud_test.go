@@ -1453,7 +1453,6 @@ func TestGet(t *testing.T) {
 					ID:   1,
 					Name: "Henglong",
 					Sex:  "Male",
-					Books: []Book{},
 				},
 			},
 			model: &Author{},
@@ -1482,13 +1481,11 @@ func TestGet(t *testing.T) {
 					ID:   1,
 					Name: "Henglong",
 					Sex:  "Male",
-					Books: []Book{},
 				},
 				{
 					ID:   2,
 					Name: "Vicheka",
 					Sex:  "Male",
-					Books: []Book{},
 				},
 			},
 			model: &Author{},
@@ -1516,12 +1513,10 @@ func TestGet(t *testing.T) {
 				{
 					ID:   1,
 					Name: "Henglong",
-					Books: []Book{},
 				},
 				{
 					ID:   2,
 					Name: "Vicheka",
-					Books: []Book{},
 				},
 			},
 			model:       &Author{},
@@ -1550,19 +1545,17 @@ func TestGet(t *testing.T) {
 				{
 					ID:  1,
 					Sex: "Male",
-					Books: []Book{},
 				},
 				{
 					ID:  2,
 					Sex: "Male",
-					Books: []Book{},
 				},
 			},
 			model:       &Author{},
 			queryParams: QueryOption{OmittedFields: []string{"Name"}},
 		},
 
-		//Get Author and it association
+		//It should Get fields of Author and it association speciied in the PreloadedF
 		{
 			seeds: []interface{}{
 				&Author{
@@ -1605,6 +1598,106 @@ func TestGet(t *testing.T) {
 					},
 				},
 			},
+			queryParams: QueryOption{PreloadedFields: []string{"Books"}},
+			model: &Author{},
+		},
+
+		//It should Get fields of Author and it association speciied in the PreloadedF
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+					Books: []Book{
+						{
+							ID: 1,
+							AuthorID: 1,
+							EditorID: 1,
+							Title: "Hello-World",
+							Editor: Editor{
+								ID: 1,
+								Name: "Vicheka",
+								Sex: "Male",
+							},
+						},
+					},
+				},
+			},
+			queryParams: QueryOption{PreloadedFields: []string{"Books.Editor"}},
+			model: &Author{},
+		},
+
+		//It should Get fields of Author and it association speciied in the PreloadedF
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Editor{
+					ID:   1,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Book{
+					ID:       1,
+					Title:    "Hello-World",
+					AuthorID: 1,
+					EditorID: 1,
+				},
+			},
+			inputIDs: []uint32{
+				1,
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+					Books: []Book{
+						{
+							ID: 1,
+							Title: "Hello-World",
+							EditorID: 1,
+							AuthorID: 1,
+						},
+					},
+				},
+			},
+			queryParams: QueryOption{PreloadedFields: []string{"Books.Title"}},
 			model: &Author{},
 		},
 	}

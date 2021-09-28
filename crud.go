@@ -102,10 +102,13 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 	}
 
 	db := _db.(*gorm.DB)
+
+	for _,v := range option.GetPreloadedFields(){
+		db = db.Preload(v)
+	}
 	db.Model(repo.Model).
 		Select(option.GetSelectedFields()).
 		Omit(option.GetOmittedFields()...).Where("id IN ?", sliceOfIDs).
-		Preload(clause.Associations).
 		Find(ptrSliceT)
 		
 	sliceT = reflect.ValueOf(ptrSliceT).Elem().Interface()
