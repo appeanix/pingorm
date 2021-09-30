@@ -17,7 +17,7 @@ var models = []interface{}{
 func TestMigrate(t *testing.T) {
 
 	req := require.New(t)
-	db, err := openDb()
+	db, err := OpenDb(dbConString)
 	req.Nil(err)
 
 	// Migrate models here

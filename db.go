@@ -8,13 +8,13 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-func openDb() (*gorm.DB, error) {
+func OpenDb(conString string) (*gorm.DB, error) {
 
 	var err error
 	var db *gorm.DB
 
 	//open connection
-	if db, err = gorm.Open(mysql.Open(dbConString), &gorm.Config{
+	if db, err = gorm.Open(mysql.Open(conString), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{SingularTable: true},
 		Logger:         logger.Default,
 	}); err != nil {

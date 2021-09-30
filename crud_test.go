@@ -81,7 +81,7 @@ func TestCleanTables(t *testing.T) {
 	for _, tc := range tests {
 		req := require.New(t)
 
-		db, err := openDb()
+		db, err := OpenDb(dbConString)
 		req.Nil(err)
 
 		for _, seed := range tc.seeds {
@@ -559,7 +559,7 @@ func TestCreate(t *testing.T) {
 
 			cleanTables()
 
-			db, err := openDb()
+			db, err := OpenDb(dbConString)
 			req.Nil(err)
 			db = db.Debug()
 
@@ -1031,7 +1031,7 @@ func TestUpdate(t *testing.T) {
 						},
 					},
 					{
-						Title:    "New-Book",
+						Title: "New-Book",
 						Editor: Editor{
 							Name: "New Editor",
 							Sex:  "Female",
@@ -1063,7 +1063,7 @@ func TestUpdate(t *testing.T) {
 				},
 			},
 			queryParams: QueryOption{
-				SelectedFields: []string{"ID","Name","Sex"},
+				SelectedFields: []string{"ID", "Name", "Sex"},
 				UpdatesOnConflict: map[string][]string{
 					"Book": {
 						"AuthorID",
@@ -1075,8 +1075,6 @@ func TestUpdate(t *testing.T) {
 				},
 			},
 		},
-
-
 	}
 	for _, tc := range tests {
 		func() {
@@ -1084,7 +1082,7 @@ func TestUpdate(t *testing.T) {
 
 			cleanTables()
 
-			db, err := openDb()
+			db, err := OpenDb(dbConString)
 			req.Nil(err)
 			db = db.Debug()
 
@@ -1264,7 +1262,7 @@ func TestDelete(t *testing.T) {
 
 			cleanTables()
 
-			db, err := openDb()
+			db, err := OpenDb(dbConString)
 			req.Nil(err)
 			db = db.Debug()
 
@@ -1503,7 +1501,7 @@ func TestUpdates(t *testing.T) {
 
 			cleanTables()
 
-			db, err := openDb()
+			db, err := OpenDb(dbConString)
 			req.Nil(err)
 			db = db.Debug()
 
@@ -1700,16 +1698,16 @@ func TestGet(t *testing.T) {
 					Sex:  "Male",
 					Books: []Book{
 						{
-							ID: 1,
+							ID:       1,
 							AuthorID: 1,
 							EditorID: 1,
-							Title: "Hello-World",
+							Title:    "Hello-World",
 						},
 					},
 				},
 			},
 			queryParams: QueryOption{PreloadedFields: []string{"Books"}},
-			model: &Author{},
+			model:       &Author{},
 		},
 
 		//It should Get fields of Author and it association speciied in the PreloadedF
@@ -1747,21 +1745,21 @@ func TestGet(t *testing.T) {
 					Sex:  "Male",
 					Books: []Book{
 						{
-							ID: 1,
+							ID:       1,
 							AuthorID: 1,
 							EditorID: 1,
-							Title: "Hello-World",
+							Title:    "Hello-World",
 							Editor: Editor{
-								ID: 1,
+								ID:   1,
 								Name: "Vicheka",
-								Sex: "Male",
+								Sex:  "Male",
 							},
 						},
 					},
 				},
 			},
 			queryParams: QueryOption{PreloadedFields: []string{"Books.Editor"}},
-			model: &Author{},
+			model:       &Author{},
 		},
 
 		//It should Get fields of Author and it association speciied in the PreloadedF
@@ -1799,8 +1797,8 @@ func TestGet(t *testing.T) {
 					Sex:  "Male",
 					Books: []Book{
 						{
-							ID: 1,
-							Title: "Hello-World",
+							ID:       1,
+							Title:    "Hello-World",
 							EditorID: 1,
 							AuthorID: 1,
 						},
@@ -1808,7 +1806,7 @@ func TestGet(t *testing.T) {
 				},
 			},
 			queryParams: QueryOption{PreloadedFields: []string{"Books.Title"}},
-			model: &Author{},
+			model:       &Author{},
 		},
 	}
 
@@ -1818,7 +1816,7 @@ func TestGet(t *testing.T) {
 
 			cleanTables()
 
-			db, err := openDb()
+			db, err := OpenDb(dbConString)
 			req.Nil(err)
 			db = db.Debug()
 
