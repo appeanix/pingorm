@@ -88,7 +88,6 @@ func (repo Repo) Updates(_db interface{}, sliceOfIDs interface{}, values interfa
 }
 
 func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelector) (sliceT interface{}, err error) {
-
 	var ptrSliceT interface{}
 	if mt := reflect.TypeOf(repo.Model); mt.Kind() == reflect.Ptr {
 		ptrSliceT = reflect.New(
@@ -115,35 +114,35 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 	return sliceT, err
 }
 
-func validateSliceOfSingleDimension(sliceOfIDs interface{}) error {
+func assertSingleDimenSlice(sliceOfIDs interface{}) error {
 	ids := reflect.TypeOf(sliceOfIDs)
-	if err := validateSliceType(ids); err != nil {
+	if err := assertSliceType(ids); err != nil {
 		return err
 
 	} else if ids.Elem().Kind() == reflect.Slice {
-		return errors.New("The element of ids params must not be a kind of slice")
+		return errors.New("value must be a single dimension slice")
 
 	}
 
 	return nil
 }
 
-func validatSliceOfMultiDimension(sliceOfIDs interface{}) error {
+func assert2DimenSlice(sliceOfIDs interface{}) error {
 	ids := reflect.TypeOf(sliceOfIDs)
-	if err := validateSliceType(ids); err != nil {
+	if err := assertSliceType(ids); err != nil {
 		return err
 
 	} else if ids.Elem().Kind() != reflect.Slice {
-		return errors.New("The element of ids params must be a kind of slice.")
+		return errors.New("value must be 2 dimension slice")
 
 	}
 
 	return nil
 }
 
-func validateSliceType(valueType reflect.Type) error {
-	if valueType.Kind() != reflect.Slice && valueType.Kind() != reflect.Ptr {
-		return errors.New("The valueType is not a kind of slice or pointer")
+func assertSliceType(valueType reflect.Type) error {
+	if valueType.Kind() != reflect.Slice {
+		return errors.New("value must be a kind of slice")
 	}
 
 	return nil

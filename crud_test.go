@@ -1837,29 +1837,34 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestValidateSliceOfSingleDimen(t *testing.T) {
+func TestAssertSingleDimensionSlice(t *testing.T) {
+	var uid *string
 	tests := []struct {
 		input  interface{}
 		expErr error
 	}{
+		{
+			input:  []*string{uid},
+			expErr: nil,
+		},
 		{
 			input:  []string{"uid"},
 			expErr: nil,
 		},
 		{
 			input:  "uid",
-			expErr: errors.New("The valueType is not a kind of slice or pointer"),
+			expErr: errors.New("value must be a kind of slice"),
 		},
 		{
 			input:  [][]string{{"uid"}},
-			expErr: errors.New("The element of ids params must not be a kind of slice"),
+			expErr: errors.New("value must be a single dimension slice"),
 		},
 	}
 
 	for _, tc := range tests {
 		func() {
 			req := require.New(t)
-			err := validateSliceOfSingleDimension(tc.input)
+			err := assertSingleDimenSlice(tc.input)
 			req.Equal(tc.expErr, err)
 
 		}()
@@ -1867,24 +1872,38 @@ func TestValidateSliceOfSingleDimen(t *testing.T) {
 }
 
 func TestValidateSliceOfMultiDimen(t *testing.T) {
+	var uid *string
+
 	tests := []struct {
 		input  interface{}
 		expErr error
 	}{
 		{
+			input:  [][]*string{{uid}},
+			expErr: nil,
+		},
+		{
+			input:  [][][]string{{{"uid"}}},
+			expErr: nil,
+		},
+		{
 			input:  [][]string{{"uid"}},
 			expErr: nil,
 		},
 		{
+			input:  []string{},
+			expErr: errors.New("value must be 2 dimension slice"),
+		},
+		{
 			input:  "uid",
-			expErr: errors.New("The valueType is not a kind of slice or pointer"),
+			expErr: errors.New("value must be a kind of slice"),
 		},
 	}
 
 	for _, tc := range tests {
 		func() {
 			req := require.New(t)
-			err := validatSliceOfMultiDimension(tc.input)
+			err := assert2DimenSlice(tc.input)
 			req.Equal(tc.expErr, err)
 
 		}()
