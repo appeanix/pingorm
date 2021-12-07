@@ -114,12 +114,13 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 	return sliceT, err
 }
 
-func assertSingleDimenSlice(sliceOfIDs interface{}) error {
-	ids := reflect.TypeOf(sliceOfIDs)
+func assertSingleDimenSlice(sliceOfValues interface{}) error {
+	ids := reflect.TypeOf(sliceOfValues)
 	if err := assertSliceType(ids); err != nil {
 		return err
+	}
 
-	} else if ids.Elem().Kind() == reflect.Slice {
+	if ids.Elem().Kind() == reflect.Slice {
 		return errors.New("value must be a single dimension slice")
 
 	}
@@ -127,14 +128,14 @@ func assertSingleDimenSlice(sliceOfIDs interface{}) error {
 	return nil
 }
 
-func assert2DimenSlice(sliceOfIDs interface{}) error {
-	ids := reflect.TypeOf(sliceOfIDs)
+func assert2DimenSlice(sliceOfSlice interface{}) error {
+	ids := reflect.TypeOf(sliceOfSlice)
 	if err := assertSliceType(ids); err != nil {
 		return err
+	}
 
-	} else if ids.Elem().Kind() != reflect.Slice {
+	if ids.Elem().Kind() != reflect.Slice || ids.Elem().Elem().Kind() == reflect.Slice {
 		return errors.New("value must be 2 dimension slice")
-
 	}
 
 	return nil

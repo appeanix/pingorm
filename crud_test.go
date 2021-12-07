@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/icza/gox/gox"
 	"github.com/khaiql/dbcleaner"
 	"github.com/khaiql/dbcleaner/engine"
 	"github.com/stretchr/testify/require"
@@ -1837,14 +1838,13 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestAssertSingleDimensionSlice(t *testing.T) {
-	var uid *string
+func TestAssertSingleDimenSlice(t *testing.T) {
 	tests := []struct {
 		input  interface{}
 		expErr error
 	}{
 		{
-			input:  []*string{uid},
+			input:  []*string{gox.NewString("uid")},
 			expErr: nil,
 		},
 		{
@@ -1871,20 +1871,18 @@ func TestAssertSingleDimensionSlice(t *testing.T) {
 	}
 }
 
-func TestValidateSliceOfMultiDimen(t *testing.T) {
-	var uid *string
-
+func TestAssert2DimenSlice(t *testing.T) {
 	tests := []struct {
 		input  interface{}
 		expErr error
 	}{
 		{
-			input:  [][]*string{{uid}},
+			input:  [][]*string{{gox.NewString("uid")}},
 			expErr: nil,
 		},
 		{
 			input:  [][][]string{{{"uid"}}},
-			expErr: nil,
+			expErr: errors.New("value must be 2 dimension slice"),
 		},
 		{
 			input:  [][]string{{"uid"}},
