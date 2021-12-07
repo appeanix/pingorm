@@ -36,8 +36,8 @@ func (repo Repo) Update(_db interface{}, model interface{}, option QuerySelector
 	}
 
 	db := _db.(*gorm.DB).
-	Session(&gorm.Session{NewDB: true}).
-	Set("value:update_on_conflict", option.GetUpdatesOnConflict())
+		Session(&gorm.Session{NewDB: true}).
+		Set("value:update_on_conflict", option.GetUpdatesOnConflict())
 
 	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
 	err = db.Updates(ptrToModel).Error
@@ -103,16 +103,50 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 
 	db := _db.(*gorm.DB)
 
-	for _,v := range option.GetPreloadedFields(){
+	for _, v := range option.GetPreloadedFields() {
 		db = db.Preload(v)
 	}
 	db.Model(repo.Model).
 		Select(option.GetSelectedFields()).
 		Omit(option.GetOmittedFields()...).Where("id IN ?", sliceOfIDs).
 		Find(ptrSliceT)
-		
+
 	sliceT = reflect.ValueOf(ptrSliceT).Elem().Interface()
 	return sliceT, err
+}
+
+func validateSliceOfSingleDimension(sliceOfIDs interface{}) error {
+	ids := reflect.TypeOf(sliceOfIDs)
+	if err := validateSliceType(ids); err != nil {
+		return err
+
+	} else if ids.Elem().Kind() == reflect.Slice {
+		return errors.New("The element of ids params must not be a kind of slice")
+
+	}
+
+	return nil
+}
+
+func validatSliceOfMultiDimension(sliceOfIDs interface{}) error {
+	ids := reflect.TypeOf(sliceOfIDs)
+	if err := validateSliceType(ids); err != nil {
+		return err
+
+	} else if ids.Elem().Kind() != reflect.Slice {
+		return errors.New("The element of ids params must be a kind of slice.")
+
+	}
+
+	return nil
+}
+
+func validateSliceType(valueType reflect.Type) error {
+	if valueType.Kind() != reflect.Slice && valueType.Kind() != reflect.Ptr {
+		return errors.New("The valueType is not a kind of slice or pointer")
+	}
+
+	return nil
 }
 
 func parseModelToPtr(model interface{}) (interface{}, error) {

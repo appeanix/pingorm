@@ -1836,3 +1836,57 @@ func TestGet(t *testing.T) {
 		}()
 	}
 }
+
+func TestValidateSliceOfSingleDimen(t *testing.T) {
+	tests := []struct {
+		input  interface{}
+		expErr error
+	}{
+		{
+			input:  []string{"uid"},
+			expErr: nil,
+		},
+		{
+			input:  "uid",
+			expErr: errors.New("The valueType is not a kind of slice or pointer"),
+		},
+		{
+			input:  [][]string{{"uid"}},
+			expErr: errors.New("The element of ids params must not be a kind of slice"),
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+			err := validateSliceOfSingleDimension(tc.input)
+			req.Equal(tc.expErr, err)
+
+		}()
+	}
+}
+
+func TestValidateSliceOfMultiDimen(t *testing.T) {
+	tests := []struct {
+		input  interface{}
+		expErr error
+	}{
+		{
+			input:  [][]string{{"uid"}},
+			expErr: nil,
+		},
+		{
+			input:  "uid",
+			expErr: errors.New("The valueType is not a kind of slice or pointer"),
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+			err := validatSliceOfMultiDimension(tc.input)
+			req.Equal(tc.expErr, err)
+
+		}()
+	}
+}
