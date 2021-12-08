@@ -1841,7 +1841,7 @@ func TestGet(t *testing.T) {
 func TestBuildWhereExprByKeys(t *testing.T) {
 	tests := []struct {
 		inputIDs      interface{}
-		queryParams   QueryOption
+		queryParams   QuerySelector
 		expExpression string
 		expBuildArgs  []interface{}
 		expErr        error

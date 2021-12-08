@@ -107,16 +107,22 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 	for _, v := range option.GetPreloadedFields() {
 		db = db.Preload(v)
 	}
+
+	whereExpr, whereArgs, err := buildWhereExprByKeys(sliceOfIDs, option)
+	if err != nil {
+		return nil, err
+	}
+
 	db.Model(repo.Model).
 		Select(option.GetSelectedFields()).
-		Omit(option.GetOmittedFields()...).Where("id IN ?", sliceOfIDs).
+		Omit(option.GetOmittedFields()...).Where(whereExpr, whereArgs...).
 		Find(ptrSliceT)
 
 	sliceT = reflect.ValueOf(ptrSliceT).Elem().Interface()
 	return sliceT, err
 }
 
-func buildWhereExprByKeys(sliceOfKeyVals interface{}, option QueryOption) (string, []interface{}, error) {
+func buildWhereExprByKeys(sliceOfKeyVals interface{}, option QuerySelector) (string, []interface{}, error) {
 	keyCols := option.GetKeys()
 	keyLength := len(keyCols)
 	var whereExpression string
