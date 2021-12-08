@@ -116,64 +116,66 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 	return sliceT, err
 }
 
-func buildCompositeExpression(_db interface{}, sliceOfValues interface{}, option QueryOption) (*gorm.DB, error) {
-	db := _db.(*gorm.DB)
-
-	queryKeys := option.GetKeys()
-	keyLength := len(queryKeys)
-	var queryClauses string
-	var fieldArgs []interface{}
+func buildWhereExprByKeys(sliceOfKeyVals interface{}, option QueryOption) (string, []interface{}, error) {
+	keyCols := option.GetKeys()
+	keyLength := len(keyCols)
+	var whereExpression string
+	var whereArgs []interface{}
 
 	if keyLength == 0 {
-		if err := assertSingleDimenSlice(sliceOfValues); err != nil {
-			return nil, err
+		if err := assertSingleDimenSlice(sliceOfKeyVals); err != nil {
+			return "", nil, err
 		}
 
-		queryClauses = fmt.Sprintf("id IN ?")
-		fieldArgs = append(fieldArgs, sliceOfValues)
+		whereExpression = fmt.Sprintf("id IN ?")
+		whereArgs = append(whereArgs, sliceOfKeyVals)
+
+		return whereExpression, whereArgs, nil
 	}
 
-	if keyLength >= 1 {
-		if err := assert2DimenSlice(sliceOfValues); err != nil {
-			return nil, err
-		}
-
-		// {{..}, {..}, {..}}
-		sliceValues := reflect.ValueOf(sliceOfValues)
-		var qryExp []string
-
-		for i := 0; i < sliceValues.Len(); i++ {
-			arrValue := sliceValues.Index(i)
-
-			if arrValue.Len() != keyLength {
-				return nil, errors.New("number of slice value must be the same as query's key length")
-			}
-
-			if keyLength == 1 {
-				queryClauses = fmt.Sprintf("%s IN ?", queryKeys[0])
-				return db.Where(queryClauses, arrValue.Interface()), nil
-			}
-
-			// build expression: fieldA = ?
-			// and arg field value
-			var condFieldExp []string
-			for keyIndex := 0; keyIndex < keyLength; keyIndex++ {
-				condFieldExp = append(condFieldExp, fmt.Sprintf("%s = ?", queryKeys[keyIndex]))
-
-				argValue := arrValue.Index(keyIndex).Interface()
-				fieldArgs = append(fieldArgs, argValue)
-			}
-
-			// build expression: (fieldA = ? AND fieldB = ?)
-			fieldExps := strings.Join(condFieldExp, " AND ")
-			qryExp = append(qryExp, fmt.Sprintf("(%s)", fieldExps))
-		}
-
-		// build expression: (filedA = ? AND fieldB = ?) OR (fieldC = ? AND fieldD = ?)
-		queryClauses = strings.Join(qryExp, " OR ")
+	if err := assert2DimenSlice(sliceOfKeyVals); err != nil {
+		return "", nil, err
 	}
 
-	return db.Where(queryClauses, fieldArgs...), nil
+	// assert the query keys to lowercase
+	keyCols, err := parseSliceValueToLowerCase(keyCols)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// Retrieve the value of 2DimenSlice to build the conditional expression
+	sliceValues := reflect.ValueOf(sliceOfKeyVals)
+	var whereExpr []string
+
+	for i := 0; i < sliceValues.Len(); i++ {
+		slice2DValues := sliceValues.Index(i)
+
+		if slice2DValues.Len() != keyLength {
+			return "", nil, fmt.Errorf("key length %v requires value length %v", keyLength, keyLength)
+		}
+
+		if keyLength == 1 {
+			whereExpression = fmt.Sprintf("%s IN ?", keyCols[0])
+			return whereExpression, []interface{}{slice2DValues.Interface()}, nil
+		}
+
+		// Build individual conditional expression with AND operator i.e (col1Key = ? AND col2Key = ?)
+		var condExpr []string
+		for keyIndex := 0; keyIndex < keyLength; keyIndex++ {
+			condExpr = append(condExpr, fmt.Sprintf("%s = ?", keyCols[keyIndex]))
+
+			argValue := slice2DValues.Index(keyIndex).Interface()
+			whereArgs = append(whereArgs, argValue)
+		}
+
+		fieldExps := strings.Join(condExpr, " AND ")
+		whereExpr = append(whereExpr, fmt.Sprintf("(%s)", fieldExps))
+	}
+
+	// Finally, build where expression i.e (col1Key = ? AND col2Key = ?) OR (col1Key = ? AND col2Key = ?)
+	whereExpression = strings.Join(whereExpr, " OR ")
+
+	return whereExpression, whereArgs, nil
 }
 
 func assertSingleDimenSlice(sliceOfValues interface{}) error {
@@ -226,4 +228,17 @@ func parseModelToPtr(model interface{}) (interface{}, error) {
 
 	}
 	return nil, errors.New("model must be a kind of struct or pointer to struct type")
+}
+
+func parseSliceValueToLowerCase(values []string) ([]string, error) {
+	if len(values) == 0 {
+		return nil, errors.New("values must include one or more elements")
+	}
+
+	var valueToLower []string
+	for i := range values {
+		strToLower := strings.ToLower(values[i])
+		valueToLower = append(valueToLower, strToLower)
+	}
+	return valueToLower, nil
 }

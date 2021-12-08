@@ -1838,26 +1838,44 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestQuery(t *testing.T) {
+func TestBuildWhereExprByKeys(t *testing.T) {
 	tests := []struct {
-		inputIDs    interface{}
-		queryParams QueryOption
-		expErr      error
+		inputIDs      interface{}
+		queryParams   QueryOption
+		expExpression string
+		expBuildArgs  []interface{}
+		expErr        error
 	}{
 		{
-			inputIDs:    []string{"user01"},
-			queryParams: QueryOption{},
-			expErr:      nil,
+			inputIDs:      []string{"user01"},
+			queryParams:   QueryOption{},
+			expExpression: "id IN ?",
+			expBuildArgs:  []interface{}{[]string{"user01"}},
+			expErr:        nil,
+		},
+		{
+			inputIDs:      [][]string{{"user01"}},
+			queryParams:   QueryOption{Keys: []string{"uid"}},
+			expExpression: "uid IN ?",
+			expBuildArgs:  []interface{}{[]string{"user01"}},
+			expErr:        nil,
+		},
+		{
+			inputIDs:      [][]string{{"user01", "scopeA"}, {"user02", "scopeB"}},
+			queryParams:   QueryOption{Keys: []string{"uid", "sid"}},
+			expExpression: "(uid = ? AND sid = ?) OR (uid = ? AND sid = ?)",
+			expBuildArgs:  []interface{}{"user01", "scopeA", "user02", "scopeB"},
+			expErr:        nil,
 		},
 		{
 			inputIDs:    [][]string{{"user01"}},
-			queryParams: QueryOption{Keys: []string{"uid"}},
-			expErr:      nil,
+			queryParams: QueryOption{},
+			expErr:      errors.New("value must be a single dimension slice"),
 		},
 		{
-			inputIDs:    [][]string{{"user01", "scopeA"}, {"user02", "scopeB"}},
-			queryParams: QueryOption{Keys: []string{"uid", "sid"}},
-			expErr:      nil,
+			inputIDs:    [][]string{{"user01", "scopeA"}},
+			queryParams: QueryOption{Keys: []string{"uid"}},
+			expErr:      errors.New("key length 1 requires value length 1"),
 		},
 	}
 
@@ -1869,7 +1887,9 @@ func TestQuery(t *testing.T) {
 			req.Nil(err)
 			db = db.Debug()
 
-			db, errBuild := buildCompositeExpression(db, tc.inputIDs, tc.queryParams)
+			expr, args, errBuild := buildWhereExprByKeys(tc.inputIDs, tc.queryParams)
+			req.Equal(tc.expExpression, expr)
+			req.Equal(tc.expBuildArgs, args)
 			req.Equal(tc.expErr, errBuild)
 		}()
 	}
