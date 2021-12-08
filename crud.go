@@ -2,7 +2,9 @@ package pingorm
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -112,6 +114,66 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 
 	sliceT = reflect.ValueOf(ptrSliceT).Elem().Interface()
 	return sliceT, err
+}
+
+func buildCompositeExpression(_db interface{}, sliceOfValues interface{}, option QueryOption) (*gorm.DB, error) {
+	db := _db.(*gorm.DB)
+
+	queryKeys := option.GetKeys()
+	keyLength := len(queryKeys)
+	var queryClauses string
+	var fieldArgs []interface{}
+
+	if keyLength == 0 {
+		if err := assertSingleDimenSlice(sliceOfValues); err != nil {
+			return nil, err
+		}
+
+		queryClauses = fmt.Sprintf("id IN ?")
+		fieldArgs = append(fieldArgs, sliceOfValues)
+	}
+
+	if keyLength >= 1 {
+		if err := assert2DimenSlice(sliceOfValues); err != nil {
+			return nil, err
+		}
+
+		// {{..}, {..}, {..}}
+		sliceValues := reflect.ValueOf(sliceOfValues)
+		var qryExp []string
+
+		for i := 0; i < sliceValues.Len(); i++ {
+			arrValue := sliceValues.Index(i)
+
+			if arrValue.Len() != keyLength {
+				return nil, errors.New("number of slice value must be the same as query's key length")
+			}
+
+			if keyLength == 1 {
+				queryClauses = fmt.Sprintf("%s IN ?", queryKeys[0])
+				return db.Where(queryClauses, arrValue.Interface()), nil
+			}
+
+			// build expression: fieldA = ?
+			// and arg field value
+			var condFieldExp []string
+			for keyIndex := 0; keyIndex < keyLength; keyIndex++ {
+				condFieldExp = append(condFieldExp, fmt.Sprintf("%s = ?", queryKeys[keyIndex]))
+
+				argValue := arrValue.Index(keyIndex).Interface()
+				fieldArgs = append(fieldArgs, argValue)
+			}
+
+			// build expression: (fieldA = ? AND fieldB = ?)
+			fieldExps := strings.Join(condFieldExp, " AND ")
+			qryExp = append(qryExp, fmt.Sprintf("(%s)", fieldExps))
+		}
+
+		// build expression: (filedA = ? AND fieldB = ?) OR (fieldC = ? AND fieldD = ?)
+		queryClauses = strings.Join(qryExp, " OR ")
+	}
+
+	return db.Where(queryClauses, fieldArgs...), nil
 }
 
 func assertSingleDimenSlice(sliceOfValues interface{}) error {

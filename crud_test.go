@@ -1838,6 +1838,43 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestQuery(t *testing.T) {
+	tests := []struct {
+		inputIDs    interface{}
+		queryParams QueryOption
+		expErr      error
+	}{
+		{
+			inputIDs:    []string{"user01"},
+			queryParams: QueryOption{},
+			expErr:      nil,
+		},
+		{
+			inputIDs:    [][]string{{"user01"}},
+			queryParams: QueryOption{Keys: []string{"uid"}},
+			expErr:      nil,
+		},
+		{
+			inputIDs:    [][]string{{"user01", "scopeA"}, {"user02", "scopeB"}},
+			queryParams: QueryOption{Keys: []string{"uid", "sid"}},
+			expErr:      nil,
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+
+			db, err := OpenDb(dbConString)
+			req.Nil(err)
+			db = db.Debug()
+
+			db, errBuild := buildCompositeExpression(db, tc.inputIDs, tc.queryParams)
+			req.Equal(tc.expErr, errBuild)
+		}()
+	}
+}
+
 func TestAssertSingleDimenSlice(t *testing.T) {
 	tests := []struct {
 		input  interface{}
