@@ -1847,17 +1847,17 @@ func TestBuildWhereExprByKeys(t *testing.T) {
 		expErr        error
 	}{
 		{
-			inputIDs:      []string{"user01"},
+			inputIDs:      []string{"user01", "user02"},
 			queryParams:   QueryOption{},
 			expExpression: "id IN ?",
-			expBuildArgs:  []interface{}{[]string{"user01"}},
+			expBuildArgs:  []interface{}{"user01", "user02"},
 			expErr:        nil,
 		},
 		{
-			inputIDs:      [][]string{{"user01"}},
+			inputIDs:      [][]string{{"user01"}, {"user02"}},
 			queryParams:   QueryOption{Keys: []string{"uid"}},
 			expExpression: "uid IN ?",
-			expBuildArgs:  []interface{}{[]string{"user01"}},
+			expBuildArgs:  []interface{}{"user01", "user02"},
 			expErr:        nil,
 		},
 		{
@@ -1887,7 +1887,7 @@ func TestBuildWhereExprByKeys(t *testing.T) {
 			req.Nil(err)
 			db = db.Debug()
 
-			expr, args, errBuild := buildWhereExprByKeys(tc.inputIDs, tc.queryParams)
+			expr, args, errBuild := buildWhereExprByKeys(db, tc.inputIDs, tc.queryParams)
 			req.Equal(tc.expExpression, expr)
 			req.Equal(tc.expBuildArgs, args)
 			req.Equal(tc.expErr, errBuild)

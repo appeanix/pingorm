@@ -91,6 +91,16 @@ func (repo Repo) Updates(_db interface{}, sliceOfIDs interface{}, values interfa
 
 func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelector) (sliceT interface{}, err error) {
 	var ptrSliceT interface{}
+	db := _db.(*gorm.DB)
+	for _, v := range option.GetPreloadedFields() {
+		db = db.Preload(v)
+	}
+
+	whereExpr, whereArgs, err := buildWhereExprByKeys(db, sliceOfIDs, option)
+	if err != nil {
+		return nil, err
+	}
+
 	if mt := reflect.TypeOf(repo.Model); mt.Kind() == reflect.Ptr {
 		ptrSliceT = reflect.New(
 			reflect.MakeSlice(reflect.SliceOf(mt.Elem()), 0, 0).Type(),
@@ -102,17 +112,6 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 		).Interface()
 	}
 
-	db := _db.(*gorm.DB)
-
-	for _, v := range option.GetPreloadedFields() {
-		db = db.Preload(v)
-	}
-
-	whereExpr, whereArgs, err := buildWhereExprByKeys(sliceOfIDs, option)
-	if err != nil {
-		return nil, err
-	}
-
 	db.Model(repo.Model).
 		Select(option.GetSelectedFields()).
 		Omit(option.GetOmittedFields()...).Where(whereExpr, whereArgs...).
@@ -122,19 +121,30 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 	return sliceT, err
 }
 
-func buildWhereExprByKeys(sliceOfKeyVals interface{}, option QuerySelector) (string, []interface{}, error) {
-	keyCols := option.GetKeys()
+func buildWhereExprByKeys(_db interface{}, sliceOfKeyVals interface{}, option QuerySelector) (string, []interface{}, error) {
+	db := _db.(*gorm.DB)
+
+	var keyCols []string
+	for _, key := range option.GetKeys() {
+		keyCols = append(keyCols, db.NamingStrategy.ColumnName("", key))
+	}
 	keyLength := len(keyCols)
-	var whereExpression string
-	var whereArgs []interface{}
+
+	// Reflect the value of first dimension slice in order to iterate through slice
+	sliceValues := reflect.ValueOf(sliceOfKeyVals)
 
 	if keyLength == 0 {
 		if err := assertSingleDimenSlice(sliceOfKeyVals); err != nil {
 			return "", nil, err
 		}
 
-		whereExpression = fmt.Sprintf("id IN ?")
-		whereArgs = append(whereArgs, sliceOfKeyVals)
+		// Table is expected to have unique key column id if keys are not specify.
+		var whereArgs []interface{}
+		whereExpression := fmt.Sprintf("id IN ?")
+		for i := 0; i < sliceValues.Len(); i++ {
+			args := sliceValues.Index(i).Interface()
+			whereArgs = append(whereArgs, args)
+		}
 
 		return whereExpression, whereArgs, nil
 	}
@@ -143,16 +153,8 @@ func buildWhereExprByKeys(sliceOfKeyVals interface{}, option QuerySelector) (str
 		return "", nil, err
 	}
 
-	// assert the query keys to lowercase
-	keyCols, err := parseSliceValueToLowerCase(keyCols)
-	if err != nil {
-		return "", nil, err
-	}
-
-	// Retrieve the value of 2DimenSlice to build the conditional expression
-	sliceValues := reflect.ValueOf(sliceOfKeyVals)
 	var whereExpr []string
-
+	var whereArgs []interface{}
 	for i := 0; i < sliceValues.Len(); i++ {
 		slice2DValues := sliceValues.Index(i)
 
@@ -161,8 +163,17 @@ func buildWhereExprByKeys(sliceOfKeyVals interface{}, option QuerySelector) (str
 		}
 
 		if keyLength == 1 {
-			whereExpression = fmt.Sprintf("%s IN ?", keyCols[0])
-			return whereExpression, []interface{}{slice2DValues.Interface()}, nil
+			// Build condition expression with OR operator i.e: (uid IN ?) OR (uid IN ?)
+			var whereArgs []interface{}
+			for i := 0; i < sliceValues.Len(); i++ {
+				slice2D := sliceValues.Index(i)
+
+				argValue := slice2D.Index(0).Interface()
+				whereArgs = append(whereArgs, argValue)
+			}
+
+			whereExpression := fmt.Sprintf("%s IN ?", keyCols[0])
+			return whereExpression, whereArgs, nil
 		}
 
 		// Build individual conditional expression with AND operator i.e (col1Key = ? AND col2Key = ?)
@@ -179,8 +190,7 @@ func buildWhereExprByKeys(sliceOfKeyVals interface{}, option QuerySelector) (str
 	}
 
 	// Finally, build where expression i.e (col1Key = ? AND col2Key = ?) OR (col1Key = ? AND col2Key = ?)
-	whereExpression = strings.Join(whereExpr, " OR ")
-
+	whereExpression := strings.Join(whereExpr, " OR ")
 	return whereExpression, whereArgs, nil
 }
 
@@ -234,17 +244,4 @@ func parseModelToPtr(model interface{}) (interface{}, error) {
 
 	}
 	return nil, errors.New("model must be a kind of struct or pointer to struct type")
-}
-
-func parseSliceValueToLowerCase(values []string) ([]string, error) {
-	if len(values) == 0 {
-		return nil, errors.New("values must include one or more elements")
-	}
-
-	var valueToLower []string
-	for i := range values {
-		strToLower := strings.ToLower(values[i])
-		valueToLower = append(valueToLower, strToLower)
-	}
-	return valueToLower, nil
 }
