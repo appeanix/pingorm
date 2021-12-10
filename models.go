@@ -45,6 +45,7 @@ type (
 
 type (
 	QueryOption struct {
+		Keys              []string
 		SelectedFields    []string
 		OmittedFields     []string
 		PreloadedFields   []string
@@ -53,6 +54,7 @@ type (
 	}
 
 	QuerySelector interface {
+		GetKeys() []string
 		GetSelectedFields() []string
 		GetOmittedFields() []string
 		GetUpdatesOnConflict() map[string][]string
@@ -60,6 +62,10 @@ type (
 		GetPreloadedFields() []string
 	}
 )
+
+func (option QueryOption) GetKeys() []string {
+	return option.Keys
+}
 
 func (option QueryOption) GetSelectedFields() []string {
 	return option.SelectedFields
