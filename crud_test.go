@@ -1811,7 +1811,7 @@ func TestGet(t *testing.T) {
 			model:       &Author{},
 		},
 
-		// Get Author where ID in (1,2) with the query key `ID`
+		// Success: Get Author where ID in (1,2) with the query key `ID`
 		{
 			seeds: []interface{}{
 				&Author{
@@ -1825,8 +1825,8 @@ func TestGet(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			inputIDs: [][]uint32{
-				{1}, {2},
+			inputIDs: []uint32{
+				1, 2,
 			},
 			expGot: []Author{
 				{
@@ -1844,7 +1844,7 @@ func TestGet(t *testing.T) {
 			queryParams: QueryOption{Keys: []string{"ID"}},
 		},
 
-		// Get Author with the query key of `ID` and `Name` field
+		// Success: Get Author with the query key of `ID` and `Name` field
 		{
 			seeds: []interface{}{
 				&Author{
@@ -1886,13 +1886,12 @@ func TestGet(t *testing.T) {
 					Sex:  "Male",
 				},
 			},
-			inputIDs: []uint32{
-				1,
-				2,
+			inputIDs: [][]uint32{
+				{1, 2},
 			},
 			model:       &Author{},
 			queryParams: QueryOption{Keys: []string{"ID"}},
-			expErr:      errors.New("value must be 2 dimension slice"),
+			expErr:      errors.New("value must be a single dimension slice"),
 		},
 
 		// Return the error of invalid query key length and input value length
@@ -1950,7 +1949,7 @@ func TestBuildWhereExprByKeys(t *testing.T) {
 		inputIDs      interface{}
 		queryParams   QuerySelector
 		expExpression string
-		expBuildArgs  []interface{}
+		expBuildArgs  interface{}
 		expErr        error
 	}{
 		{
@@ -1961,7 +1960,7 @@ func TestBuildWhereExprByKeys(t *testing.T) {
 			expErr:        nil,
 		},
 		{
-			inputIDs:      [][]string{{"user01"}, {"user02"}},
+			inputIDs:      []string{"user01", "user02"},
 			queryParams:   QueryOption{Keys: []string{"uid"}},
 			expExpression: "uid IN ?",
 			expBuildArgs:  []interface{}{"user01", "user02"},
@@ -1970,19 +1969,14 @@ func TestBuildWhereExprByKeys(t *testing.T) {
 		{
 			inputIDs:      [][]string{{"user01", "scopeA"}, {"user02", "scopeB"}},
 			queryParams:   QueryOption{Keys: []string{"uid", "sid"}},
-			expExpression: "(uid = ? AND sid = ?) OR (uid = ? AND sid = ?)",
-			expBuildArgs:  []interface{}{"user01", "scopeA", "user02", "scopeB"},
+			expExpression: "(uid, sid) IN ?",
+			expBuildArgs:  [][]interface{}{{"user01", "scopeA"}, {"user02", "scopeB"}},
 			expErr:        nil,
 		},
 		{
-			inputIDs:    [][]string{{"user01", "userA"}, {"user02", "userB"}},
+			inputIDs:    [][]string{{"user01", "userA"}},
 			queryParams: QueryOption{Keys: []string{"uid"}},
-			expErr:      errors.New("key length 1 requires value length 1"),
-		},
-		{
-			inputIDs:    [][]string{{"user01"}, {"user02", "userB"}},
-			queryParams: QueryOption{Keys: []string{"uid"}},
-			expErr:      errors.New("key length 1 requires value length 1"),
+			expErr:      errors.New("value must be a single dimension slice"),
 		},
 		{
 			inputIDs:    [][]string{{"user01"}, {"user02", "userB"}},
@@ -1993,11 +1987,6 @@ func TestBuildWhereExprByKeys(t *testing.T) {
 			inputIDs:    [][]string{{"user01"}},
 			queryParams: QueryOption{},
 			expErr:      errors.New("value must be a single dimension slice"),
-		},
-		{
-			inputIDs:    [][]string{{"user01", "scopeA"}},
-			queryParams: QueryOption{Keys: []string{"uid"}},
-			expErr:      errors.New("key length 1 requires value length 1"),
 		},
 	}
 
