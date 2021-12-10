@@ -100,6 +100,12 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 	if err != nil {
 		return nil, err
 	}
+	var queryExpr interface{}
+	if queryKeys := option.GetKeys(); len(queryKeys) == 0 || len(queryKeys) == 1 {
+		queryExpr = db.Where(whereExpr, whereArgs)
+	} else {
+		queryExpr = db.Where(whereExpr, whereArgs...)
+	}
 
 	if mt := reflect.TypeOf(repo.Model); mt.Kind() == reflect.Ptr {
 		ptrSliceT = reflect.New(
@@ -114,16 +120,14 @@ func (repo Repo) Get(_db interface{}, sliceOfIDs interface{}, option QuerySelect
 
 	db.Model(repo.Model).
 		Select(option.GetSelectedFields()).
-		Omit(option.GetOmittedFields()...).Where(whereExpr, whereArgs...).
+		Omit(option.GetOmittedFields()...).Where(queryExpr).
 		Find(ptrSliceT)
 
 	sliceT = reflect.ValueOf(ptrSliceT).Elem().Interface()
 	return sliceT, err
 }
 
-func buildWhereExprByKeys(_db interface{}, sliceOfKeyVals interface{}, option QuerySelector) (string, []interface{}, error) {
-	db := _db.(*gorm.DB)
-
+func buildWhereExprByKeys(db *gorm.DB, sliceOfKeyVals interface{}, option QuerySelector) (string, []interface{}, error) {
 	var keyCols []string
 	for _, key := range option.GetKeys() {
 		keyCols = append(keyCols, db.NamingStrategy.ColumnName("", key))
@@ -133,47 +137,54 @@ func buildWhereExprByKeys(_db interface{}, sliceOfKeyVals interface{}, option Qu
 	// Reflect the value of first dimension slice in order to iterate through slice
 	sliceValues := reflect.ValueOf(sliceOfKeyVals)
 
+	// Build condition expression of empty option keys
 	if keyLength == 0 {
 		if err := assertSingleDimenSlice(sliceOfKeyVals); err != nil {
 			return "", nil, err
 		}
 
 		// Table is expected to have unique key column id if keys are not specify.
-		var whereArgs []interface{}
-		whereExpression := fmt.Sprintf("id IN ?")
+		var argVals []interface{}
+		whereExpr := fmt.Sprintf("id IN ?")
 		for i := 0; i < sliceValues.Len(); i++ {
 			args := sliceValues.Index(i).Interface()
-			whereArgs = append(whereArgs, args)
+			argVals = append(argVals, args)
 		}
 
-		return whereExpression, whereArgs, nil
+		return whereExpr, argVals, nil
 	}
 
 	if err := assert2DimenSlice(sliceOfKeyVals); err != nil {
 		return "", nil, err
 	}
 
-	var whereExpr []string
-	var whereArgs []interface{}
-	for i := 0; i < sliceValues.Len(); i++ {
-		slice2DValues := sliceValues.Index(i)
+	// Build condition expression of option keys with only one field
+	// i.e: QueryOption{Keys: []string{"keyA"}}
+	if keyLength == 1 {
+		var argVals []interface{}
+		for valIdx := 0; valIdx < sliceValues.Len(); valIdx++ {
+			sliceVals := sliceValues.Index(valIdx)
 
-		if slice2DValues.Len() != keyLength {
-			return "", nil, fmt.Errorf("key length %v requires value length %v", keyLength, keyLength)
-		}
-
-		if keyLength == 1 {
-			// Build condition expression with OR operator i.e: (uid IN ?) OR (uid IN ?)
-			var whereArgs []interface{}
-			for i := 0; i < sliceValues.Len(); i++ {
-				slice2D := sliceValues.Index(i)
-
-				argValue := slice2D.Index(0).Interface()
-				whereArgs = append(whereArgs, argValue)
+			// assert the length of each slice2DValues match the key's length
+			if sliceVals.Len() != keyLength {
+				return "", nil, fmt.Errorf("key length %v requires value length %v", keyLength, keyLength)
 			}
 
-			whereExpression := fmt.Sprintf("%s IN ?", keyCols[0])
-			return whereExpression, whereArgs, nil
+			argVal := sliceVals.Index(0).Interface()
+			argVals = append(argVals, argVal)
+		}
+		whereExpr := fmt.Sprintf("%s IN ?", keyCols[0])
+		return whereExpr, argVals, nil
+	}
+
+	var whereCond []string
+	var argVals []interface{}
+	for valIdx := 0; valIdx < sliceValues.Len(); valIdx++ {
+		slice2DValues := sliceValues.Index(valIdx)
+
+		// assert the length of each slice2DValues match the key's length
+		if slice2DValues.Len() != keyLength {
+			return "", nil, fmt.Errorf("key length %v requires value length %v", keyLength, keyLength)
 		}
 
 		// Build individual conditional expression with AND operator i.e (col1Key = ? AND col2Key = ?)
@@ -182,16 +193,16 @@ func buildWhereExprByKeys(_db interface{}, sliceOfKeyVals interface{}, option Qu
 			condExpr = append(condExpr, fmt.Sprintf("%s = ?", keyCols[keyIndex]))
 
 			argValue := slice2DValues.Index(keyIndex).Interface()
-			whereArgs = append(whereArgs, argValue)
+			argVals = append(argVals, argValue)
 		}
 
 		fieldExps := strings.Join(condExpr, " AND ")
-		whereExpr = append(whereExpr, fmt.Sprintf("(%s)", fieldExps))
+		whereCond = append(whereCond, fmt.Sprintf("(%s)", fieldExps))
 	}
 
 	// Finally, build where expression i.e (col1Key = ? AND col2Key = ?) OR (col1Key = ? AND col2Key = ?)
-	whereExpression := strings.Join(whereExpr, " OR ")
-	return whereExpression, whereArgs, nil
+	whereExpr := strings.Join(whereCond, " OR ")
+	return whereExpr, argVals, nil
 }
 
 func assertSingleDimenSlice(sliceOfValues interface{}) error {

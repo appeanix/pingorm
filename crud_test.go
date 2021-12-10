@@ -1539,6 +1539,7 @@ func TestGet(t *testing.T) {
 		expGot      interface{}
 		queryParams QueryOption
 		model       interface{}
+		expErr      error
 	}{
 		//Get Author where ID = 1
 		{
@@ -1809,6 +1810,112 @@ func TestGet(t *testing.T) {
 			queryParams: QueryOption{PreloadedFields: []string{"Books.Title"}},
 			model:       &Author{},
 		},
+
+		// Get Author where ID in (1,2) with the query key `ID`
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: [][]uint32{
+				{1}, {2},
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			model:       &Author{},
+			queryParams: QueryOption{Keys: []string{"ID"}},
+		},
+
+		// Get Author with the query key of `ID` and `Name` field
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: [][]interface{}{
+				{1, "Henglong"},
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+			},
+			model:       &Author{},
+			queryParams: QueryOption{Keys: []string{"ID", "Name"}},
+		},
+
+		// Return the error of invalid inputs format
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: []uint32{
+				1,
+				2,
+			},
+			model:       &Author{},
+			queryParams: QueryOption{Keys: []string{"ID"}},
+			expErr:      errors.New("value must be 2 dimension slice"),
+		},
+
+		// Return the error of invalid query key length and input value length
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+			},
+			inputIDs: [][]interface{}{
+				{1, "Henglong"}, {2},
+			},
+			model:       &Author{},
+			queryParams: QueryOption{Keys: []string{"ID", "Name"}},
+			expErr:      errors.New("key length 2 requires value length 2"),
+		},
 	}
 
 	for _, tc := range tests {
@@ -1828,8 +1935,8 @@ func TestGet(t *testing.T) {
 
 			got, errGet := Repo{Model: tc.model}.Get(db, tc.inputIDs, tc.queryParams)
 
-			req.Nil(errGet)
 			req.Equal(tc.expGot, got)
+			req.Equal(tc.expErr, errGet)
 
 			var dbAuthors []Author
 			db.Model(&Author{}).Select("ID", "Name", "Sex").Find(&dbAuthors)
@@ -1866,6 +1973,21 @@ func TestBuildWhereExprByKeys(t *testing.T) {
 			expExpression: "(uid = ? AND sid = ?) OR (uid = ? AND sid = ?)",
 			expBuildArgs:  []interface{}{"user01", "scopeA", "user02", "scopeB"},
 			expErr:        nil,
+		},
+		{
+			inputIDs:    [][]string{{"user01", "userA"}, {"user02", "userB"}},
+			queryParams: QueryOption{Keys: []string{"uid"}},
+			expErr:      errors.New("key length 1 requires value length 1"),
+		},
+		{
+			inputIDs:    [][]string{{"user01"}, {"user02", "userB"}},
+			queryParams: QueryOption{Keys: []string{"uid"}},
+			expErr:      errors.New("key length 1 requires value length 1"),
+		},
+		{
+			inputIDs:    [][]string{{"user01"}, {"user02", "userB"}},
+			queryParams: QueryOption{Keys: []string{"uid", "sid"}},
+			expErr:      errors.New("key length 2 requires value length 2"),
 		},
 		{
 			inputIDs:    [][]string{{"user01"}},
