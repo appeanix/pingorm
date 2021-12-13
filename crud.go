@@ -70,7 +70,12 @@ func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QuerySel
 		db = db.Unscoped()
 	}
 
-	return db.Where("id IN ?", sliceOfIDs).Delete(repo.Model).Error
+	whereExpr, whereArgs, err := buildWhereExprByKeys(db, sliceOfIDs, option)
+	if err != nil {
+		return err
+	}
+
+	return db.Where(whereExpr, whereArgs).Delete(repo.Model).Error
 }
 
 func (repo Repo) Updates(_db interface{}, sliceOfIDs interface{}, values interface{}, option QuerySelector) error {

@@ -1255,6 +1255,81 @@ func TestDelete(t *testing.T) {
 			},
 			expErr: nil,
 		},
+
+		// hard delete with query key `ID`
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: []uint32{
+				1,
+				2,
+			},
+			expGot: []uint32{
+				1,
+				2,
+			},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			queryParams: QueryOption{HardDelete: true, Keys: []string{"ID"}},
+		},
+
+		// hard delete with the query key of `ID` and `Name`
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:   1,
+					Name: "Henglong",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   2,
+					Name: "Vicheka",
+					Sex:  "Male",
+				},
+				&Author{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			input: [][]interface{}{
+				{1, "Henglong"}, {2, "Vicheka"},
+			},
+			expGot: []uint32{
+				1,
+				2,
+			},
+			deletedModel: &Author{},
+			expDbAuthor: []Author{
+				{
+					ID:   3,
+					Name: "NaNa",
+					Sex:  "Female",
+				},
+			},
+			queryParams: QueryOption{HardDelete: true, Keys: []string{"ID", "Name"}},
+		},
 	}
 
 	for _, tc := range tests {
