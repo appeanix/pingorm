@@ -17,6 +17,9 @@ type (
 		Deleted       gorm.DeletedAt
 		Books         []Book
 	}
+	Authorable interface {
+		GetID() uint32
+	}
 )
 
 type (
@@ -85,4 +88,9 @@ func (option QueryOption) IsHardDelete() bool {
 
 func (option QueryOption) GetPreloadedFields() []string {
 	return option.PreloadedFields
+}
+
+// Implement Authorable
+func (a Author) GetID() uint32 {
+	return a.ID
 }

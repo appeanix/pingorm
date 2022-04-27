@@ -1606,6 +1606,95 @@ func TestUpdates(t *testing.T) {
 	}
 }
 
+func TestUpserts(t *testing.T) {
+
+	tests := []struct {
+		input       interface{}
+		expGot      interface{}
+		expDbAuthor interface{}
+		queryParams QueryOption
+	}{
+		{
+			input: []Author{
+				{
+					Name: "vck",
+				},
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "vck",
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "vck",
+				},
+			},
+		},
+		{
+			input: []Authorable{
+				Author{
+					Name: "vck",
+				},
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "vck",
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "vck",
+				},
+			},
+		},
+		{
+			input: []interface{}{
+				Author{
+					Name: "vck",
+				},
+			},
+			expGot: []Author{
+				{
+					ID:   1,
+					Name: "vck",
+				},
+			},
+			expDbAuthor: []Author{
+				{
+					ID:   1,
+					Name: "vck",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		func() {
+			req := require.New(t)
+
+			cleanTables()
+
+			db, err := OpenDb(dbConString)
+			req.Nil(err)
+			db = db.Debug()
+
+			_, errUpsert := Repo{}.Upsert(db, tc.input, tc.queryParams)
+
+			req.Nil(errUpsert)
+
+			var dbAuthors []Author
+			db.Model(&Author{}).Select("ID", "Name").Find(&dbAuthors)
+			req.Equal(tc.expDbAuthor, dbAuthors)
+
+		}()
+	}
+}
+
 func TestGet(t *testing.T) {
 
 	tests := []struct {

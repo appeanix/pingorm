@@ -47,12 +47,17 @@ func (repo Repo) Update(_db interface{}, model interface{}, option QuerySelector
 }
 
 func (repo Repo) Upsert(_db interface{}, slice interface{}, options QuerySelector) (sliceOfResult interface{}, err error) {
+
+	if sliceOfResult, err = convertToSliceOfStructTypes(slice); err != nil {
+		return nil, err
+	}
+
 	db := _db.(*gorm.DB)
 	err = db.Clauses(clause.OnConflict{
 		DoUpdates: clause.AssignmentColumns(options.GetSelectedFields()),
-	}).Omit(options.GetOmittedFields()...).Create(slice).Error
+	}).Omit(options.GetOmittedFields()...).Create(sliceOfResult).Error
 
-	return slice, err
+	return sliceOfResult, err
 }
 
 func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QuerySelector) error {
@@ -241,4 +246,51 @@ func parseModelToPtr(model interface{}) (interface{}, error) {
 
 	}
 	return nil, errors.New("model must be a kind of struct or pointer to struct type")
+}
+
+func convertToSliceOfStructTypes(sliceArg interface{}) (interface{}, error) {
+
+	var sliceVal reflect.Value
+
+	if sliceType := reflect.TypeOf(sliceArg); sliceType.Kind() != reflect.Slice {
+		panic("slice required")
+
+	} else if tk := sliceType.Elem().Kind(); tk != reflect.Interface {
+		return sliceArg, nil
+
+	} else if sliceVal = reflect.ValueOf(sliceArg); sliceVal.Len() == 0 {
+		return nil, errors.New("empty slices")
+	}
+
+	firstConcreteElement := sliceVal.Index(0).Interface()
+	sliceType := reflect.TypeOf(firstConcreteElement)
+	supportedKinds := []func() bool{
+		func() bool {
+			return sliceType.Kind() == reflect.Struct
+		},
+		func() bool {
+			return sliceType.Kind() == reflect.Ptr && sliceType.Elem().Kind() == reflect.Struct
+		},
+	}
+	for i, isKindOf := range supportedKinds {
+		if isKindOf() {
+			break
+		} else if i == len(supportedKinds)-1 {
+			panic("element is not struct or pointer to struct")
+		}
+	}
+
+	sliceOfValues := reflect.MakeSlice(reflect.SliceOf(sliceType), 0, 0)
+	for i := 0; i < sliceVal.Len(); i++ {
+		val := reflect.ValueOf(sliceVal.Index(i).Interface())
+
+		if val.Type().AssignableTo(sliceType) {
+			sliceOfValues = reflect.Append(sliceOfValues, val)
+
+		} else {
+			panic("some incompatible slice element types found")
+		}
+	}
+
+	return sliceOfValues.Interface(), nil
 }

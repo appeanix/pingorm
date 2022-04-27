@@ -10,6 +10,6 @@ require ( // indirect
 	github.com/lib/pq v1.10.3 // indirect
 	github.com/mattn/go-sqlite3 v1.14.8 // indirect
 	github.com/stretchr/testify v1.7.0
-	gorm.io/driver/mysql v1.1.2
-	gorm.io/gorm v1.21.15
+	gorm.io/driver/mysql v1.3.3
+	gorm.io/gorm v1.23.5
 )
