@@ -1076,8 +1076,46 @@ func TestUpdate(t *testing.T) {
 				},
 			},
 		},
+
+		// With asterisk (*), it should Update every field of Author regardless of zero-value (empty) with given excluded fields
+		{
+			seeds: []interface{}{
+				&Author{
+					ID:            1,
+					Name:          "Henglong",
+					Sex:           "Male",
+					ContactNumber: "1234567890",
+				},
+			},
+			input: Author{
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
+				ContactNumber: "",
+			},
+			expGot: &Author{
+				ID:            1,
+				Name:          "Henglong-Updated",
+				Sex:           "Male-Updated",
+				ContactNumber: "",
+			},
+			expDbAuthor: []Author{
+				{
+					ID:            1,
+					Name:          "Henglong-Updated",
+					Sex:           "Male",
+					ContactNumber: "",
+				},
+			},
+			expDbBook:   []Book{},
+			expDbEditor: []Editor{},
+			queryParams: QueryOption{
+				SelectedFields: []string{"*"},
+				OmittedFields:  []string{"Sex"},
+			},
+		},
 	}
-	for _, tc := range tests {
+	for _, tc := range tests[len(tests)-1:] {
 		func() {
 			req := require.New(t)
 
