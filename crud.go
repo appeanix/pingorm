@@ -62,6 +62,11 @@ func (repo Repo) Upsert(_db interface{}, slice interface{}, options QuerySelecto
 
 func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QuerySelector) error {
 
+	ptrToModel, err := parseModelToPtr(repo.Model)
+	if err != nil {
+		return err
+	}
+
 	if reflect.TypeOf(sliceOfIDs).Kind() == reflect.Slice {
 		if reflect.ValueOf(sliceOfIDs).Len() == 0 {
 			return nil
@@ -80,7 +85,7 @@ func (repo Repo) Delete(_db interface{}, sliceOfIDs interface{}, option QuerySel
 		return err
 	}
 
-	return db.Where(whereExpr, whereArgs).Delete(repo.Model).Error
+	return db.Where(whereExpr, whereArgs).Delete(ptrToModel).Error
 }
 
 func (repo Repo) Updates(_db interface{}, sliceOfIDs interface{}, values interface{}, option QuerySelector) error {

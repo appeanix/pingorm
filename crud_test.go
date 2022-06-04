@@ -1191,7 +1191,7 @@ func TestDelete(t *testing.T) {
 				1,
 				2,
 			},
-			deletedModel: &Author{},
+			deletedModel: Author{},
 			expDbAuthor: []Author{
 				{
 
