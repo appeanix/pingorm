@@ -21,7 +21,6 @@ func (repo Repo) Create(_db interface{}, model interface{}, option QuerySelector
 	}
 
 	db := _db.(*gorm.DB).
-		Session(&gorm.Session{NewDB: true}).
 		Set("value:update_on_conflict", option.GetUpdatesOnConflict())
 
 	err = db.Select(option.GetSelectedFields()).
@@ -37,9 +36,7 @@ func (repo Repo) Update(_db interface{}, model interface{}, option QuerySelector
 		return nil, err
 	}
 
-	db := _db.(*gorm.DB).
-		Session(&gorm.Session{NewDB: true}).
-		Set("value:update_on_conflict", option.GetUpdatesOnConflict())
+	db := _db.(*gorm.DB).Set("value:update_on_conflict", option.GetUpdatesOnConflict())
 
 	db = db.Select(option.GetSelectedFields()).Omit(option.GetOmittedFields()...)
 	err = db.Updates(ptrToModel).Error
